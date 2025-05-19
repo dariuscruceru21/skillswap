@@ -1,0 +1,39 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# dotenv environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+*.csv
+*.out
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Editor-specific
+.vscode/
+.idea/
+
+# Build / output
+dist/
+build/
+
+# Optional: if using Redis/MongoDB dumps
+dump.rdb
+*.pid
+*.sock
+
+# Optional: if you're uploading user content to a temp folder
+uploads/
+tmp/
+temp/
