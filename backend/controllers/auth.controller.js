@@ -61,29 +61,50 @@ export const signup = async (req, res) => {
     setCookies(res, accesToken, refreshToken);
 
     res.status(201).json({
-      user: {
-       _id:user._id,
-       name:user.name,
-       email:user.email,
-       role:user.role,
-      },
-      message: "User created successfully",
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
     });
   } catch (error) {
+    console.log("Error in signup controller",error.message);
     res.status(500).json({ message: error.message });
   }
 };
 
 export const signin = async (req, res) => {
-  res.send("Sign in Route called");
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+
+    if (user && (await user.comparePassword(password))) {
+      const { accesToken, refreshToken } = generateTokens(user._id);
+      await storeRefreshToken(user._id, refreshToken);
+      setCookies(res, accesToken, refreshToken);
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      });
+    }else{
+        res.status(401).json({ message: "Invalid credentials" });
+    }
+  } catch (error) {
+    console.log("Error in login controller",error.message);
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const logout = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    if(refreshToken){
-        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-        await redis.del(`refreshToken:${decoded.userId}`);
+    if (refreshToken) {
+      const decoded = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET
+      );
+      await redis.del(`refreshToken:${decoded.userId}`);
     }
     res.clearCookie("accesToken");
     res.clearCookie("refreshToken");
@@ -91,6 +112,7 @@ export const logout = async (req, res) => {
       message: "Logged out successfully",
     });
   } catch (error) {
+    console.log("Error in logout controller",error.message);
     res.status(500).json({
       message: "Error logging out",
       error: error.message,
