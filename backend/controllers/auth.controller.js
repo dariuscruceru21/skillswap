@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { redis } from "../lib/redis.js";
 
 const generateTokens = (userId) => {
-  const accesToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
+  const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
     expiresIn: "15m",
   });
 
@@ -11,7 +11,7 @@ const generateTokens = (userId) => {
     expiresIn: "7d",
   });
 
-  return { accesToken, refreshToken };
+  return { accessToken, refreshToken };
 };
 
 const storeRefreshToken = async (userId, refreshToken) => {
@@ -23,8 +23,8 @@ const storeRefreshToken = async (userId, refreshToken) => {
   ); //7 days
 };
 
-const setCookies = (res, accesToken, refreshToken) => {
-  res.cookie("accessToken", accesToken, {
+const setCookies = (res, accessToken, refreshToken) => {
+  res.cookie("accessToken", accessToken, {
     httpOnly: true, //prevent XXS attacks
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict", //prevent CSRF attack
@@ -54,11 +54,11 @@ export const signup = async (req, res) => {
     });
 
     //authenticate user using jwt with redis database
-    const { accesToken, refreshToken } = generateTokens(user._id);
+    const { accessToken, refreshToken } = generateTokens(user._id);
     await storeRefreshToken(user._id, refreshToken);
 
     //set cookies
-    setCookies(res, accesToken, refreshToken);
+    setCookies(res, accessToken, refreshToken);
 
     res.status(201).json({
       _id: user._id,
@@ -78,9 +78,9 @@ export const signin = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.comparePassword(password))) {
-      const { accesToken, refreshToken } = generateTokens(user._id);
+      const { accessToken, refreshToken } = generateTokens(user._id);
       await storeRefreshToken(user._id, refreshToken);
-      setCookies(res, accesToken, refreshToken);
+      setCookies(res, accessToken, refreshToken);
       res.json({
         _id: user._id,
         name: user.name,
@@ -106,7 +106,7 @@ export const logout = async (req, res) => {
       );
       await redis.del(`refreshToken:${decoded.userId}`);
     }
-    res.clearCookie("accesToken");
+    res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
     res.json({
       message: "Logged out successfully",
@@ -136,14 +136,14 @@ export const refreshToken = async (req, res) => {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
-    const accesToken = jwt.sign(
+    const accessToken = jwt.sign(
       { userId: decoded.userId },
       process.env.ACCESS_TOKEN_SECRET,
       {
         expiresIn: "15m",
       }
     );
-    res.cookie("accessToken", accesToken, {
+    res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
@@ -158,4 +158,7 @@ export const refreshToken = async (req, res) => {
     });
   }
 };
+
+//TODO: implement getProfile controller
+//export const getProfile = async (req,res)=>{}
 

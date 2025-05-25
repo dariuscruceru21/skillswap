@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.route.js';
+import listingsRoutes from './routes/listings.route.js';
 import {connectDB} from './lib/db.js';
 
 
@@ -14,6 +15,8 @@ app.use(express.json());//allows us to parse body of the request
 app.use(cookieParser());//allows us to parse cookies
 
 app.use("/api/auth", authRoutes)
+app.use("/api/listings", listingsRoutes);
+
 app.get("/", (req, res) => {
   res.send("API is running");
 });
