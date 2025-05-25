@@ -67,7 +67,7 @@ export const signup = async (req, res) => {
       role: user.role,
     });
   } catch (error) {
-    console.log("Error in signup controller",error.message);
+    console.log("Error in signup controller", error.message);
     res.status(500).json({ message: error.message });
   }
 };
@@ -87,11 +87,11 @@ export const signin = async (req, res) => {
         email: user.email,
         role: user.role,
       });
-    }else{
-        res.status(401).json({ message: "Invalid credentials" });
+    } else {
+      res.status(401).json({ message: "Invalid credentials" });
     }
   } catch (error) {
-    console.log("Error in login controller",error.message);
+    console.log("Error in login controller", error.message);
     res.status(500).json({ message: error.message });
   }
 };
@@ -112,10 +112,50 @@ export const logout = async (req, res) => {
       message: "Logged out successfully",
     });
   } catch (error) {
-    console.log("Error in logout controller",error.message);
+    console.log("Error in logout controller", error.message);
     res.status(500).json({
       message: "Error logging out",
       error: error.message,
     });
   }
 };
+
+//refresh the acces token
+export const refreshToken = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "No refresh token provided" });
+    }
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const storedRefreshToken = await redis.get(
+      `refreshToken:${decoded.userId}`
+    );
+    if (storedRefreshToken !== refreshToken) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+
+    const accesToken = jwt.sign(
+      { userId: decoded.userId },
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: "15m",
+      }
+    );
+    res.cookie("accessToken", accesToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+    res.json({ message: "Access token refreshed successfully" });
+  } catch (error) {
+    console.log("Error in refresh token controller", error.message);
+    res.status(500).json({
+      message: "Error refreshing access token",
+      error: error.message,
+    });
+  }
+};
+
