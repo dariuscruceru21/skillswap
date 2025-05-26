@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 const donationSchema = new mongoose.Schema({
   donor: {
     type: mongoose.Schema.Types.ObjectId,
@@ -20,3 +21,6 @@ const donationSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+const Donation = mongoose.model("Donation", donationSchema);
+
+export default Donation;
