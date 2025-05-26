@@ -58,7 +58,13 @@ const userSchema = new mongoose.Schema({
         ref:"Listing",
       }
     }
-  ]
+  ],
+   passedQuizzes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "QuizSubmission", // Optional: link to passed quizzes
+    },
+  ],
 });
 
 
