@@ -1,5 +1,5 @@
-import Quiz from "../models/Quiz.js";
-import QuizSubmission from "../models/QuizSubmission.js";
+import Quiz from "../models/quiz.model.js";
+import QuizSubmission from "../models/quizSubmission.model.js";
 import User from "../models/user.model.js";
 
 export const createQuiz = async (req, res) => {

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 const quizSubmissionSchema = new mongoose.Schema({
   quiz: {
     type: mongoose.Schema.Types.ObjectId,
