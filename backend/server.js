@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.route.js';
 import listingsRoutes from './routes/listings.route.js';
+import cartRoutes from './routes/cart.route.js';
 import {connectDB} from './lib/db.js';
 
 
@@ -16,6 +17,7 @@ app.use(cookieParser());//allows us to parse cookies
 
 app.use("/api/auth", authRoutes)
 app.use("/api/listings", listingsRoutes);
+app.use("/api/cart", cartRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running");
