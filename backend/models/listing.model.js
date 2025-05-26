@@ -31,7 +31,15 @@ const listingsSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-   
+    tags: {
+      type: [String],
+      default: [],
+    },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
   { timestamps: true }
 );

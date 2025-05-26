@@ -38,7 +38,7 @@ export const getFeaturedListings = async (req, res) => {
 
 export const createListing = async (req, res) => {
   try {
-    const { name, description, type, category, image } = req.body;
+    const { name, description, type, category, image,tags } = req.body;
 
     let cloudinaryResponse = null;
 
@@ -56,6 +56,8 @@ export const createListing = async (req, res) => {
       image: cloudinaryResponse?.secure_url
         ? cloudinaryResponse.secure_url
         : "", // Use the secure URL from Cloudinary
+      tags: tags?.map(tag => tag.toLowerCase().trim()) || [],
+      owner: req.user._id,
     });
     res.status(201).json({ message: "Listing created successfully", listing });
   } catch (error) {
@@ -138,6 +140,36 @@ export const toggleFeaturedListing = async (req,res) =>{
         
     }
 }
+// MATCH LISTINGS BASED ON USER'S SKILL TAGS
+export const getMatchedListingsForUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user || !user.skillTags || user.skillTags.length === 0) {
+      return res.status(400).json({ message: "User has no skill tags to match" });
+    }
+
+    // Fetch all listings
+    const listings = await Listing.find({ archived: false });
+
+    // Calculate simple match score based on shared tags
+    const matchedListings = listings
+      .map((listing) => {
+        const tagsToCompare = listing.tags || [listing.category];
+        const commonTags = user.skillTags.filter(tag => tagsToCompare.includes(tag));
+        const matchScore = commonTags.length;
+
+        return { ...listing.toObject(), matchScore };
+      })
+      .filter(l => l.matchScore > 0) // Only include relevant matches
+      .sort((a, b) => b.matchScore - a.matchScore); // Sort by best match
+
+    res.json({ matches: matchedListings });
+  } catch (error) {
+    console.log("Error in getMatchedListingsForUser", error.message);
+    res.status(500).json({ message: "Server error while matching listings" });
+  }
+};
 
 async function updateFeatureListingsCache() {
     try {

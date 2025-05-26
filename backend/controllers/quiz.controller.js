@@ -2,7 +2,6 @@ import Quiz from "../models/Quiz.js";
 import QuizSubmission from "../models/QuizSubmission.js";
 import User from "../models/user.model.js";
 
-
 export const createQuiz = async (req, res) => {
   try {
     const { title, skillTag, questions } = req.body;
@@ -25,7 +24,6 @@ export const createQuiz = async (req, res) => {
   }
 };
 
-
 export const getAllQuizzes = async (req, res) => {
   try {
     const quizzes = await Quiz.find().sort({ createdAt: -1 });
@@ -35,18 +33,26 @@ export const getAllQuizzes = async (req, res) => {
   }
 };
 
-
 export const getQuizById = async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
-    res.json(quiz);
+    const safeQuiz = {
+      _id: quiz._id,
+      title: quiz.title,
+      skillTag: quiz.skillTag,
+      questions: quiz.questions.map((q) => ({
+        questionText: q.questionText,
+        options: q.options,
+      })),
+    };
+
+    res.json(safeQuiz);
   } catch (error) {
     res.status(500).json({ message: "Error fetching quiz" });
   }
 };
-
 
 export const submitQuiz = async (req, res) => {
   try {
@@ -77,7 +83,10 @@ export const submitQuiz = async (req, res) => {
 
     // Optionally mark user as skill tested
     if (passed) {
-      await User.findByIdAndUpdate(userId, { skillTested: true });
+      await User.findByIdAndUpdate(userId, {
+        skillTested: true,
+        $addToSet: { skillTags: quiz.skillTag }, // avoid duplicates
+      });
     }
 
     res.json({
@@ -92,7 +101,6 @@ export const submitQuiz = async (req, res) => {
   }
 };
 
-
 export const deleteQuiz = async (req, res) => {
   try {
     const quiz = await Quiz.findByIdAndDelete(req.params.id);
@@ -106,12 +114,24 @@ export const deleteQuiz = async (req, res) => {
   }
 };
 
-
 export const getUserQuizSubmissions = async (req, res) => {
   try {
-    const submissions = await QuizSubmission.find({ user: req.params.userId }).populate("quiz");
+    const submissions = await QuizSubmission.find({
+      user: req.params.userId,
+    }).populate("quiz");
     res.json(submissions);
   } catch (error) {
     res.status(500).json({ message: "Error fetching quiz submissions" });
   }
 };
+
+export const getQuizzesBySkillTag = async (req, res) => {
+  try {
+    const tag = req.params.skillTag.toLowerCase().trim();
+    const quizzes = await Quiz.find({ skillTag: tag });
+    res.json(quizzes);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch quizzes by skill" });
+  }
+};
+
