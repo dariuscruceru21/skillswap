@@ -10,7 +10,7 @@ export default function NavbarSignUp() {
         </Link>
         <div className="flex items-center">
           <p className="text-gray-500 mr-4 hidden sm:block">Already have an account?</p>
-          <Link to="/login" className="text-indigo-600 hover:text-indigo-800 font-medium">Sign In</Link>
+          <Link to="/signin" className="text-indigo-600 hover:text-indigo-800 font-medium">Sign In</Link>
         </div>
       </div>
     </nav>

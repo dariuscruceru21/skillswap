@@ -3,24 +3,32 @@ import Navbar from "../components/NavbarSignUp";
 import Footer from "../components/FooterSignUp";
 import InputField from "../components/InputField";
 import LeftPanel from "../components/LeftPanel";
+import { useUserStore } from "../stores/useUserStore";
 
 export default function SignUpPage() {
-  
+  const signup = useUserStore((state) => state.signup);
+  const loading = useUserStore((state) => state.loading);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     const fullName = e.target["full-name"].value;
     const email = e.target.email.value;
     const password = e.target.password.value;
     const confirmPassword = e.target["confirm-password"].value;
 
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!");
-      return;
+    // Call Zustand signup
+    await signup({
+      name: fullName,
+      email,
+      password,
+      confirmPassword,
+    });
+
+
+    if (useUserStore.getState().user) {
+      window.location.href = "/signin";
     }
-    console.log({ fullName, email, password });
-    alert("Account created! Redirecting...");
-    window.location.href = "/dashboard";
   };
 
   return (
@@ -33,24 +41,59 @@ export default function SignUpPage() {
 
           {/* Right Panel - signup form */}
           <div className="bg-white rounded-xl auth-card p-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Account</h1>
-            <p className="text-gray-600 mb-8">Start swapping skills in just a few minutes</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Create Your Account
+            </h1>
+            <p className="text-gray-600 mb-8">
+              Start swapping skills in just a few minutes
+            </p>
 
             <form onSubmit={handleSubmit}>
               <div className="mb-6 space-y-4">
                 <InputField id="full-name" label="Full Name" required />
-                <InputField id="email" label="Email Address" type="email" required /> 
-                <InputField id="password" label="Password" type="password" required />
-                <InputField id="confirm-password" label="Confirm Password" type="password" required />
+                <InputField
+                  id="email"
+                  label="Email Address"
+                  type="email"
+                  required
+                />
+                <InputField
+                  id="password"
+                  label="Password"
+                  type="password"
+                  required
+                />
+                <InputField
+                  id="confirm-password"
+                  label="Confirm Password"
+                  type="password"
+                  required
+                />
               </div>
-
-            
 
               <div className="mb-6">
                 <label className="inline-flex items-start">
-                  <input type="checkbox" required className="mt-1 rounded border-gray-300 text-indigo-600" />
+                  <input
+                    type="checkbox"
+                    required
+                    className="mt-1 rounded border-gray-300 text-indigo-600"
+                  />
                   <span className="ml-2 text-sm text-gray-700">
-                    I agree to the <a href="#" className="text-indigo-600 hover:text-indigo-500">Terms of Service</a> and <a href="#" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>.
+                    I agree to the{" "}
+                    <a
+                      href="#"
+                      className="text-indigo-600 hover:text-indigo-500"
+                    >
+                      Terms of Service
+                    </a>{" "}
+                    and{" "}
+                    <a
+                      href="#"
+                      className="text-indigo-600 hover:text-indigo-500"
+                    >
+                      Privacy Policy
+                    </a>
+                    .
                   </span>
                 </label>
               </div>
