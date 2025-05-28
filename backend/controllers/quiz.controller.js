@@ -135,3 +135,28 @@ export const getQuizzesBySkillTag = async (req, res) => {
   }
 };
 
+export const updateQuiz = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, skillTag, questions } = req.body;
+
+    const quiz = await Quiz.findById(id);
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Update quiz fields
+    if (title !== undefined) quiz.title = title;
+    if (skillTag !== undefined) quiz.skillTag = skillTag;
+    if (questions !== undefined) quiz.questions = questions;
+
+    const updatedQuiz = await quiz.save();
+
+    res.json(updatedQuiz);
+  } catch (error) {
+    console.error("Error updating quiz:", error.message);
+    res.status(500).json({ message: "Error updating quiz", error: error.message });
+  }
+};
+

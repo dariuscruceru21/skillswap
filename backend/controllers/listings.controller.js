@@ -4,7 +4,7 @@ import Listing from "../models/listing.model.js";
 
 export const getAllListings = async (req, res) => {
   try {
-    const listings = await Listing.find({}); //find all listings
+    const listings = await Listing.find({}).populate('owner', 'name');
     res.json({ listings });
   } catch (error) {
     console.log("Error in getAllListings controller", error.message);
@@ -76,7 +76,7 @@ export const deleteListing = async (req, res) => {
         console.log("Error deleting image from Cloudinary", error.message);
       }
     }
-    await Listing.findAndDelete(req.params.id); // Remove the listing from the database
+    await Listing.findByIdAndDelete(req.params.id); // Changed from findAndDelete
     res.json({ message: "Listing deleted successfully" });
   } catch (error) {
     console.log("Error in deleteListing controller", error.message);
@@ -175,3 +175,55 @@ async function updateFeatureListingsCache() {
         
     }
 }
+
+export const updateListing = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, category, type, image, tags, archived, isFeatured } = req.body;
+
+    const listing = await Listing.findById(id);
+
+    if (!listing) {
+      return res.status(404).json({ message: "Listing not found" });
+    }
+
+    // Handle image update if a new image is provided
+    if (image && image !== listing.image) {
+      // Optional: Delete old image from Cloudinary if it exists
+      if (listing.image) {
+        try {
+          const publicId = listing.image.split("/").pop().split(".")[0];
+          await cloudinary.uploader.destroy(`listings/${publicId}`);
+          console.log("Old image deleted from Cloudinary");
+        } catch (error) {
+          console.log("Error deleting old image from Cloudinary", error.message);
+        }
+      }
+      const cloudinaryResponse = await cloudinary.uploader.upload(image, {
+        folder: "listings",
+      });
+      listing.image = cloudinaryResponse.secure_url;
+    }
+
+    // Update listing fields
+    if (name !== undefined) listing.name = name;
+    if (description !== undefined) listing.description = description;
+    if (category !== undefined) listing.category = category;
+    if (type !== undefined) listing.type = type;
+    if (tags !== undefined) listing.tags = tags.map(tag => tag.toLowerCase().trim());
+    if (archived !== undefined) listing.archived = archived;
+    if (isFeatured !== undefined) listing.isFeatured = isFeatured;
+
+    const updatedListing = await listing.save();
+
+    // Optional: Update featured listings cache if isFeatured status changed
+    if (isFeatured !== undefined) {
+        await updateFeatureListingsCache();
+    }
+
+    res.json(updatedListing);
+  } catch (error) {
+    console.log("Error in updateListing controller", error.message);
+    res.status(500).json({ message: "Error updating listing", error: error.message });
+  }
+};

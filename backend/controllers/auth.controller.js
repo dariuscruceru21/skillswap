@@ -186,3 +186,104 @@ export const getProfile = async (req, res) => {
   }
 };
 
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}, '-password -refreshToken').sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    console.log("Error in getAllUsers controller", error.message);
+    res.status(500).json({
+      message: "Error fetching users",
+      error: error.message,
+    });
+  }
+};
+
+export const createUser = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // Create new user
+    const user = new User({
+      name,
+      email,
+      password,
+      role: role || "user" // Default to "user" if role not specified
+    });
+
+    await user.save();
+
+    // Return user without sensitive data
+    const userResponse = user.toObject();
+    delete userResponse.password;
+    delete userResponse.refreshToken;
+
+    res.status(201).json(userResponse);
+  } catch (error) {
+    console.log("Error in createUser controller", error.message);
+    res.status(500).json({
+      message: "Error creating user",
+      error: error.message,
+    });
+  }
+};
+
+export const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, role } = req.body;
+
+    // Find user by ID
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (role) user.role = role;
+
+    await user.save();
+
+    // Return updated user without sensitive data
+    const userResponse = user.toObject();
+    delete userResponse.password;
+    delete userResponse.refreshToken;
+
+    res.json(userResponse);
+  } catch (error) {
+    console.log("Error in updateUser controller", error.message);
+    res.status(500).json({
+      message: "Error updating user",
+      error: error.message,
+    });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find and delete user
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.log("Error in deleteUser controller", error.message);
+    res.status(500).json({
+      message: "Error deleting user",
+      error: error.message,
+    });
+  }
+};
+

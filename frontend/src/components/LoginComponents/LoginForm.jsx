@@ -1,23 +1,36 @@
 import { useUserStore } from "../../stores/useUserStore";
+import { useState } from "react";
+
 export default function LoginForm() {
   const login = useUserStore((state) => state.login);
   const loading = useUserStore((state) => state.loading);
+  const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError(""); // Clear any previous errors
     const email = e.target.email.value;
     const password = e.target.password.value;
 
-    // Call Zustand signin
-    await login(email, password);
+    try {
+      // Call Zustand signin
+      await login(email, password);
 
-    if (useUserStore.getState().user) {
-      window.location.href = "/homepage";
+      if (useUserStore.getState().user) {
+        window.location.href = "/homepage";
+      }
+    } catch (error) {
+      setError("Invalid email or password. Please try again.");
     }
   };
 
   return (
     <form onSubmit={handleLogin}>
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+          {error}
+        </div>
+      )}
       <div className="mb-4">
         <label
           htmlFor="email"
@@ -68,9 +81,10 @@ export default function LoginForm() {
       </div>
       <button
         type="submit"
-        className="w-full gradient-bg text-white py-3 rounded-lg hover:opacity-90 font-medium text-lg mb-4"
+        disabled={loading}
+        className="w-full gradient-bg text-white py-3 rounded-lg hover:opacity-90 font-medium text-lg mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Sign In
+        {loading ? "Signing in..." : "Sign In"}
       </button>
       <div className="mb-6">
         <div className="relative">

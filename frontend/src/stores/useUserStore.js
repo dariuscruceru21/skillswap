@@ -42,7 +42,8 @@ export const useUserStore = create((set, get) => ({
       toast.success("Logged in!");
     } catch (error) {
       set({ loading: false });
-      toast.error(error.response?.data?.message || "An error occurred");
+      toast.error(error.response?.data?.message || "Invalid email or password");
+      throw error;
     }
   },
 

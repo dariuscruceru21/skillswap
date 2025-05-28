@@ -7,7 +7,8 @@ import {
   getRecommandedListings,
   getListingsByCategory,
   toggleFeaturedListing,
-  getMatchedListingsForUser
+  getMatchedListingsForUser,
+  updateListing
 } from "../controllers/listings.controller.js";
 import { protectedRoute, adminRoute } from "../middleware/auth.middleware.js";
 
@@ -19,8 +20,9 @@ router.get("/category/:category", getListingsByCategory);
 router.get("/recommandations", getRecommandedListings);
 router.post("/", protectedRoute, adminRoute, createListing);
 router.patch("/:id", protectedRoute, adminRoute, toggleFeaturedListing);
-router.post("/:id", protectedRoute, adminRoute, deleteListing);
+router.delete("/:id", protectedRoute, adminRoute, deleteListing);
 router.get("/match", protectedRoute, getMatchedListingsForUser);
+router.put("/:id", protectedRoute, adminRoute, updateListing);
 
 
 export default router;

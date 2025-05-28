@@ -6,7 +6,8 @@ import {
   submitQuiz,
   deleteQuiz,
   getUserQuizSubmissions,
-  getQuizzesBySkillTag
+  getQuizzesBySkillTag,
+  updateQuiz
 } from "../controllers/quiz.controller.js";
 import { protectedRoute,adminRoute } from '../middleware/auth.middleware.js';
 
@@ -19,6 +20,7 @@ router.post("/:id/submit", protectedRoute, submitQuiz);
 router.delete("/:id", protectedRoute, adminRoute, deleteQuiz);
 router.get("/user/:userId/submissions", protectedRoute, getUserQuizSubmissions);
 router.get("/skill/:skillTag",  getQuizzesBySkillTag);
+router.put("/:id", protectedRoute, adminRoute, updateQuiz);
 
 
 export default router;
