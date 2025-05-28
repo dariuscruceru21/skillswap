@@ -8,7 +8,7 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen font-sans bg-gray-50">
      
-
+     
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/signup" element={<SignUpPage />} />
