@@ -18,7 +18,12 @@ const userSchema = new mongoose.Schema({
     required: [true, "Password is required"],
     minlength: [6, "Password must be at least 6 characters long"],
   },
-  skillTags: [String],
+  skills: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Skill"
+    }
+  ],
   skillTested: {
     type: Boolean,
     default: false,

@@ -9,6 +9,7 @@ import quizRoutes from './routes/quiz.route.js';
 import swapRoutes from './routes/swap.routes.js';
 import donationRoutes from './routes/donation.route.js';
 import analyticsRoutes from './routes/analytics.route.js';
+import skillRoutes from './routes/skill.routes.js';
 
 import {connectDB} from './lib/db.js';
 
@@ -34,6 +35,7 @@ app.use("/api/quiz", quizRoutes);
 app.use("/api/swap", swapRoutes);
 app.use("/api/donation",donationRoutes);
 app.use("/api/analytics",analyticsRoutes);
+app.use("/api/skill",skillRoutes);
 
 
 app.get("/", (req, res) => {

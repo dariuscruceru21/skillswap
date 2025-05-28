@@ -7,6 +7,15 @@ export const useUserStore = create((set, get) => ({
   loading: false,
   checkingAuth: true,
 
+  fetchProfile: async () => {
+    set({ loading: true });
+    try {
+      const res = await axios.get("/auth/profile"); // Adjust endpoint if needed
+      set({ user: res.data, loading: false });
+    } catch (e) {
+      set({ loading: false });
+    }
+  },
   signup: async ({ name, email, password, confirmPassword}) => {
     set({ loading: true });
 

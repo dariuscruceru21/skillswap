@@ -160,16 +160,23 @@ export const refreshToken = async (req, res) => {
 };
 
 //TODO: implement getProfile controller
-export const getProfile = async (req,res)=>{
+export const getProfile = async (req, res) => {
   try {
-    res.json(req.user);
+    // Use the authenticated user's id
+    const user = await User.findById(req.user._id)
+      .populate({
+        path: "reviews.reviewerId",
+        select: "name",
+      })
+      .lean();
+
+    res.json(user);
   } catch (error) {
     console.log("Error in getProfile controller", error.message);
     res.status(500).json({
       message: "Error fetching profile",
       error: error.message,
     });
-    
   }
-}
+};
 
