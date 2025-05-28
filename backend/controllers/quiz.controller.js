@@ -72,7 +72,7 @@ export const submitQuiz = async (req, res) => {
     });
 
     const score = Math.round((correct / quiz.questions.length) * 100);
-    const passed = score >= 70;
+    const passed = score >= 80;
 
     const submission = await QuizSubmission.create({
       quiz: quiz._id,
@@ -81,11 +81,12 @@ export const submitQuiz = async (req, res) => {
       passed,
     });
 
-    // Optionally mark user as skill tested
+    // Optionally mark user as skill tested and add submission to passedQuizzes
     if (passed) {
       await User.findByIdAndUpdate(userId, {
         skillTested: true,
         $addToSet: { skillTags: quiz.skillTag }, // avoid duplicates
+        $push: { passedQuizzes: submission._id }, // Add submission ID to passedQuizzes
       });
     }
 

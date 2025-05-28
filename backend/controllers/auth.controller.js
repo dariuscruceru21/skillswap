@@ -174,6 +174,13 @@ export const getProfile = async (req, res) => {
         path: "reviews.reviewerId",
         select: "name",
       })
+      .populate({
+        path: "passedQuizzes",
+        populate: {
+          path: "quiz",
+          select: "skillTag title questions", // Select fields needed on frontend
+        },
+      })
       .lean();
 
     res.json(user);
@@ -237,7 +244,7 @@ export const createUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, role } = req.body;
+    const { name, email, role, occupation, education, languages, interests } = req.body;
 
     // Find user by ID
     const user = await User.findById(id);
@@ -246,9 +253,13 @@ export const updateUser = async (req, res) => {
     }
 
     // Update user fields
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (role) user.role = role;
+    if (name !== undefined) user.name = name;
+    if (email !== undefined) user.email = email;
+    if (role !== undefined) user.role = role;
+    if (occupation !== undefined) user.occupation = occupation;
+    if (education !== undefined) user.education = education;
+    if (languages !== undefined) user.languages = languages;
+    if (interests !== undefined) user.interests = interests;
 
     await user.save();
 
@@ -282,6 +293,62 @@ export const deleteUser = async (req, res) => {
     console.log("Error in deleteUser controller", error.message);
     res.status(500).json({
       message: "Error deleting user",
+      error: error.message,
+    });
+  }
+};
+
+export const createReview = async (req, res) => {
+  try {
+    const { id } = req.params; // User ID to whom the review is being added
+    const { reviewerId, stars, comment } = req.body; // Review data from the request body
+
+    // Find the user to whom the review is being added
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Validate review data (basic validation)
+    if (!reviewerId || stars === undefined || !comment) {
+       return res.status(400).json({ message: "Reviewer ID, stars, and comment are required" });
+    }
+    
+    // Check if reviewer exists (optional but recommended)
+    const reviewer = await User.findById(reviewerId);
+    if (!reviewer) {
+        return res.status(404).json({ message: "Reviewer not found" });
+    }
+
+    // Create the new review object
+    const newReview = {
+      reviewerId: reviewerId,
+      stars: stars,
+      comment: comment,
+      date: new Date() // Automatically set the date
+    };
+
+    // Add the new review to the user's reviews array
+    user.reviews.push(newReview);
+
+    // Recalculate the average rating
+    const totalStars = user.reviews.reduce((sum, review) => sum + review.stars, 0);
+    user.rating = (totalStars / user.reviews.length).toFixed(1); // Calculate average and round to 1 decimal place
+
+    // Save the updated user document
+    await user.save();
+
+    // Return the updated user or a success message
+    // Populating reviews again to return the reviewer name in the response
+    await user.populate('reviews.reviewerId', 'name');
+    
+    res.status(201).json(user);
+
+  } catch (error) {
+    console.log("Error in createReview controller", error.message);
+    res.status(500).json({
+      message: "Error adding review",
       error: error.message,
     });
   }

@@ -17,17 +17,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Password is required"],
     minlength: [6, "Password must be at least 6 characters long"],
-  },
-  skills: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Skill"
-    }
-  ],
-  skillTested: {
-    type: Boolean,
-    default: false,
-  },
+  }, 
   avatar: {
     type: String, // Cloudinary URL or base64
   },
@@ -51,6 +41,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["user", "admin"],
     default: "user",
+  },
+  occupation: {
+    type: String,
+  },
+  education: {
+    type: String,
+  },
+  languages: {
+    type: [String],
+  },
+  interests: {
+    type: [String],
   },
   cartItems:[
     {

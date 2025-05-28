@@ -8,7 +8,8 @@ import {
   getAllUsers,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  createReview
 } from "../controllers/auth.controller.js";
 import { protectedRoute, adminRoute } from "../middleware/auth.middleware.js";
 
@@ -23,5 +24,6 @@ router.get("/users", protectedRoute, adminRoute, getAllUsers);
 router.post("/users", protectedRoute, adminRoute, createUser);
 router.put("/users/:id", protectedRoute, adminRoute, updateUser);
 router.delete("/users/:id", protectedRoute, adminRoute, deleteUser);
+router.post("/users/:id/reviews", protectedRoute, createReview);
 
 export default router;

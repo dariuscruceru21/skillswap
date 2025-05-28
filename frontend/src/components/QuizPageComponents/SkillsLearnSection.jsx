@@ -1,14 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useUserStore } from "../../stores/useUserStore";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function SkillsLearnSection() {
-  const [activeTab, setActiveTab] = useState("learn"); // "learn" or "current"
+  const [activeTab, setActiveTab] = useState("learn");
+  const [quizzes, setQuizzes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { user, fetchProfile } = useUserStore();
+  const navigate = useNavigate();
 
-  // Dummy data for current skills
-  const mySkills = [
-    { name: "Programming", level: "Advanced" },
-    { name: "Guitar", level: "Intermediate" },
-    { name: "Spanish", level: "Beginner" },
-  ];
+  useEffect(() => {
+    fetchQuizzes();
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const fetchQuizzes = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("/api/quiz");
+      setQuizzes(response.data);
+    } catch (error) {
+      toast.error("Error fetching quizzes");
+      console.error("Error fetching quizzes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStartQuiz = async (quizId) => {
+    try {
+      const response = await axios.get(`/api/quiz/${quizId}`);
+      navigate(`/quiz/${quizId}`);
+    } catch (error) {
+      toast.error("Error starting quiz");
+      console.error("Error starting quiz:", error);
+    }
+  };
+
+  // Filter quizzes based on search query and passed quizzes
+  const passedQuizIds = new Set(user?.passedQuizzes?.map(submission => submission.quiz?._id).filter(id => id));
+
+  const filteredQuizzes = quizzes.filter(quiz =>
+    (!passedQuizIds.has(quiz._id)) && // Exclude quizzes the user has passed
+    (quiz.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    quiz.skillTag.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  // Get unique skills from passed quizzes
+  const currentSkills = user?.passedQuizzes?.map(submission => ({
+    name: submission.quiz.skillTag,
+    score: submission.score,
+    passed: submission.passed
+  })) || [];
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -52,19 +98,38 @@ export default function SkillsLearnSection() {
           <h2 className="text-xl font-bold text-gray-900 mb-6">
             My Current Skills
           </h2>
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <ul className="divide-y divide-gray-100">
-              {mySkills.map((skill, idx) => (
-                <li
-                  key={idx}
-                  className="p-4 flex justify-between items-center"
-                >
-                  <span className="font-medium text-gray-900">{skill.name}</span>
-                  <span className="text-sm text-gray-500">{skill.level}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+          ) : currentSkills.length > 0 ? (
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <ul className="divide-y divide-gray-100">
+                {currentSkills.map((skill, idx) => (
+                  <li
+                    key={idx}
+                    className="p-4 flex justify-between items-center"
+                  >
+                    <div>
+                      <span className="font-medium text-gray-900">{skill.name}</span>
+                      <span className="ml-2 text-sm text-gray-500">
+                        Score: {skill.score}%
+                      </span>
+                    </div>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      skill.passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    }`}>
+                      {skill.passed ? "Passed" : "Failed"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+              <p className="text-gray-500">You haven't completed any skill quizzes yet.</p>
+            </div>
+          )}
         </section>
       )}
 
@@ -76,6 +141,8 @@ export default function SkillsLearnSection() {
               <input
                 type="text"
                 placeholder="Search skills..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -92,267 +159,36 @@ export default function SkillsLearnSection() {
             </div>
           </div>
 
-          {/* Browse All Skills */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Browse All Skills
-            </h3>
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-                {/* Category 1 */}
-                <div className="p-4 border-b border-r border-gray-100">
-                  <h4 className="font-medium text-gray-900 mb-3">Technical</h4>
-                  <ul className="space-y-2">
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Programming
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Web Development
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Mobile Development
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Data Science
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Cybersecurity
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        UI/UX Design
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Cloud Computing
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Category 2 */}
-                <div className="p-4 border-b border-r border-gray-100">
-                  <h4 className="font-medium text-gray-900 mb-3">Creative</h4>
-                  <ul className="space-y-2">
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Photography
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Graphic Design
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Music
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Writing
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Painting
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Video Editing
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Animation
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Category 3 */}
-                <div className="p-4 border-b border-r border-gray-100">
-                  <h4 className="font-medium text-gray-900 mb-3">Language</h4>
-                  <ul className="space-y-2">
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Spanish
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        French
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Mandarin
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        German
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Japanese
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Italian
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Russian
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Category 4 */}
-                <div className="p-4 border-b border-gray-100">
-                  <h4 className="font-medium text-gray-900 mb-3">Other</h4>
-                  <ul className="space-y-2">
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Cooking
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Fitness
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Gardening
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        DIY Crafts
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Financial Planning
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Public Speaking
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="text-sm text-gray-600 hover:text-indigo-600"
-                      >
-                        Chess
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredQuizzes.map((quiz) => (
+                <div
+                  key={quiz._id}
+                  className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
+                >
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {quiz.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Skill: {quiz.skillTag}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-4">
+                    {quiz.questions.length} questions
+                  </p>
+                  <button
+                    onClick={() => handleStartQuiz(quiz._id)}
+                    className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                  >
+                    Start Quiz
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
     </main>

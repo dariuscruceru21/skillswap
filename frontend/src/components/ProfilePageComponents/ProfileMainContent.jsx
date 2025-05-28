@@ -20,8 +20,10 @@ import {
   IdCard,
   StarHalf
 } from "lucide-react";
+import React, { useState, useEffect } from 'react';
 import { useUserStore } from "../../stores/useUserStore";
-import { useEffect } from "react";
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 function getInitials(name) {
   if (!name) return "";
@@ -34,14 +36,80 @@ function getInitials(name) {
 
 export default function ProfileMainContent({ activeTab }) {
   const { user, fetchProfile } = useUserStore();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    occupation: '',
+    education: '',
+    languages: [],
+    interests: [],
+  });
 
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
 
+  useEffect(() => {
+    if (user) {
+      setEditFormData({
+        occupation: user.occupation || '',
+        education: user.education || '',
+        languages: user.languages || [],
+        interests: user.interests || [],
+      });
+    }
+  }, [user]);
+
   if (!user) {
     return <div>Loading...</div>;
   }
+
+  const handleEditButtonClick = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    if (user) {
+      setEditFormData({
+        occupation: user.occupation || '',
+        education: user.education || '',
+        languages: user.languages || [],
+        interests: user.interests || [],
+      });
+    }
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleEditArrayInputChange = (e, fieldName) => {
+    const value = e.target.value;
+    setEditFormData((prev) => ({
+      ...prev,
+      [fieldName]: value.split(',').map(item => item.trim()).filter(item => item !== ''),
+    }));
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`/api/auth/users/${user._id}`, editFormData, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      });
+      toast.success('Profile updated successfully');
+      setIsEditModalOpen(false);
+      fetchProfile();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Error updating profile');
+    }
+  };
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -70,7 +138,10 @@ export default function ProfileMainContent({ activeTab }) {
               <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center">
                 <Share2 className="mr-2" size={16} /> Share Profile
               </button>
-              <button className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white gradient-bg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center">
+              <button
+                onClick={handleEditButtonClick}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white gradient-bg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center"
+              >
                 <Pencil className="mr-2" size={16} /> Edit Profile
               </button>
             </div>
@@ -82,12 +153,14 @@ export default function ProfileMainContent({ activeTab }) {
             </div>
             <div className="flex items-center bg-gray-100 px-3 py-1 rounded-full">
               <Repeat className="text-indigo-500 mr-1" size={16} />
-              <span className="text-sm font-medium">{user.exchangesCompleted ?? 0} exchanges completed</span>
+              <span className="text-sm font-medium">
+                {user.exchangesCompleted ?? 0} exchanges completed
+              </span>
             </div>
             <div className="flex items-center bg-gray-100 px-3 py-1 rounded-full">
               <Clock className="text-indigo-500 mr-1" size={16} />
               <span className="text-sm font-medium">
-                Member since {user.memberSince ? new Date(user.memberSince).toLocaleString('default', { month: 'long', year: 'numeric' }) : "N/A"}
+                Member since {user.createdAt ? new Date(user.createdAt).toLocaleString('default', { month: 'long', year: 'numeric' }) : "N/A"}
               </span>
             </div>
           </div>
@@ -115,9 +188,7 @@ export default function ProfileMainContent({ activeTab }) {
               {/* Bio Section */}
               <div className="bg-white shadow rounded-lg p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">About Me</h2>
-                <p className="text-gray-600 mb-4">
-                  {user.bio ?? "No bio provided yet."}
-                </p>
+            
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div className="flex items-start">
                     <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700">
@@ -143,7 +214,7 @@ export default function ProfileMainContent({ activeTab }) {
                     </div>
                     <div className="ml-3">
                       <h3 className="text-sm font-medium text-gray-900">Languages</h3>
-                      <p className="text-sm text-gray-500">{user.languages?.join(", ") ?? "Not specified"}</p>
+                      <p className="text-sm text-gray-500">{(user.languages ?? []).join(", ") || "Not specified"}</p>
                     </div>
                   </div>
                   <div className="flex items-start">
@@ -152,7 +223,7 @@ export default function ProfileMainContent({ activeTab }) {
                     </div>
                     <div className="ml-3">
                       <h3 className="text-sm font-medium text-gray-900">Interests</h3>
-                      <p className="text-sm text-gray-500">{user.interests?.join(", ") ?? "Not specified"}</p>
+                      <p className="text-sm text-gray-500">{(user.interests ?? []).join(", ") || "Not specified"}</p>
                     </div>
                   </div>
                 </div>
@@ -188,47 +259,50 @@ export default function ProfileMainContent({ activeTab }) {
               <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-bold text-gray-900">Recent Reviews</h2>
-                  <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500">See all</button>
+                  {/* Optional: Add a button to view all reviews if implemented */}
+                  {/* <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500">See all</button> */}
                 </div>
                 <div className="space-y-4">
-                  {(user.reviews ?? []).map((review, idx) => {
-                    // Safely get stars as a number, default to 0
-                    const stars = Number(review.stars) || 0;
-                    const fullStars = Math.floor(stars);
-                    const halfStar = stars % 1 >= 0.5;
-                    // Use populated reviewer name if available, fallback to "User"
-                    const reviewerName = review.reviewerId?.name || "User";
-                    return (
-                      <div key={idx} className="bg-gray-50 rounded-lg p-4 transition-all duration-300 review-card">
-                        <div className="flex items-start">
-                          <div className="flex-shrink-0">
-                            <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-medium">
-                              {getInitials(reviewerName)}
-                            </div>
-                          </div>
-                          <div className="ml-3">
-                            <div className="flex items-center">
-                              <h3 className="text-sm font-medium text-gray-900">{reviewerName}</h3>
-                              <span className="ml-2 text-xs text-gray-500">
-                                {review.date ? new Date(review.date).toLocaleDateString() : ""}
-                              </span>
-                            </div>
-                            <div className="flex items-center mt-1">
-                              <div className="flex items-center text-yellow-400">
-                                {[...Array(fullStars)].map((_, i) => (
-                                  <Star key={i} size={16} fill="currentColor" stroke="none" />
-                                ))}
-                                {halfStar && <StarHalf size={16} fill="currentColor" stroke="none" />}
+                  {(user.reviews ?? []).length > 0 ? (
+                    (user.reviews ?? []).map((review, idx) => {
+                      // Safely get stars as a number, default to 0
+                      const stars = Number(review.stars) || 0;
+                      const fullStars = Math.floor(stars);
+                      const halfStar = stars % 1 >= 0.5;
+                      // Use populated reviewer name if available, fallback to "User"
+                      const reviewerName = review.reviewerId?.name || "User";
+                      const reviewComment = review.comment || "No comment provided."; // Safely get comment
+                      return (
+                        <div key={idx} className="bg-gray-50 rounded-lg p-4 transition-all duration-300 review-card">
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0">
+                              <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-medium">
+                                {getInitials(reviewerName)}
                               </div>
-                              <span className="ml-2 text-sm font-medium text-gray-900">{stars}</span>
                             </div>
-                            <p className="mt-2 text-sm text-gray-600">{review.comment}</p>
+                            <div className="ml-3">
+                              <div className="flex items-center">
+                                <h3 className="text-sm font-medium text-gray-900">{reviewerName}</h3>
+                                <span className="ml-2 text-xs text-gray-500">
+                                  {review.date ? new Date(review.date).toLocaleDateString() : ""}
+                                </span>
+                              </div>
+                              <div className="flex items-center mt-1">
+                                <div className="flex items-center text-yellow-400">
+                                  {[...Array(fullStars)].map((_, i) => (
+                                    <Star key={i} size={16} fill="currentColor" stroke="none" />
+                                  ))}
+                                  {halfStar && <StarHalf size={16} fill="currentColor" stroke="none" />}
+                                </div>
+                                <span className="ml-2 text-sm font-medium text-gray-900">{stars}</span>
+                              </div>
+                              <p className="mt-2 text-sm text-gray-600">{reviewComment}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                  {(user.reviews?.length ?? 0) === 0 && (
+                      );
+                    })
+                  ) : (
                     <div className="text-gray-400 text-center">No reviews yet.</div>
                   )}
                 </div>
@@ -344,6 +418,92 @@ export default function ProfileMainContent({ activeTab }) {
         <>
           {/* Activity section */}
         </>
+      )}
+
+      {/* Edit Profile Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex justify-center items-center animate-fadeIn">
+          <div className="relative p-6 border w-[500px] shadow-2xl rounded-xl bg-white transform transition-all animate-slideIn">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold text-gray-900">Edit Profile</h3>
+              <button
+                onClick={handleEditModalClose}
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="occupation">
+                  Occupation
+                </label>
+                <input
+                  type="text"
+                  id="occupation"
+                  name="occupation"
+                  value={editFormData.occupation}
+                  onChange={handleEditInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="education">
+                  Education
+                </label>
+                <input
+                  type="text"
+                  id="education"
+                  name="education"
+                  value={editFormData.education}
+                  onChange={handleEditInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="languages">
+                  Languages (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  id="languages"
+                  name="languages"
+                  value={editFormData.languages.join(', ')}
+                  onChange={(e) => handleEditArrayInputChange(e, 'languages')}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="interests">
+                  Interests (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  id="interests"
+                  name="interests"
+                  value={editFormData.interests.join(', ')}
+                  onChange={(e) => handleEditArrayInputChange(e, 'interests')}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                />
+              </div>
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleEditModalClose}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </main>
   );
