@@ -1,4 +1,5 @@
 import { redis } from "../lib/redis.js";
+import cloudinary from "../lib/cloudinary.js";
 import Listing from "../models/listing.model.js";
 
 export const getAllListings = async (req, res) => {
@@ -13,22 +14,15 @@ export const getAllListings = async (req, res) => {
 
 export const getFeaturedListings = async (req, res) => {
   try {
-    let featuredListings = await redis.get("featuredListings");
-    if (featuredListings) {
-      return res.json(JSON.parse(featuredListings));
-    }
+    // Always fetch fresh from DB to ensure population
+    const featuredListings = await Listing.find({ isFeatured: true })
+      .populate("owner", "name rating email")
+      .lean();
 
-    //if not in redis we fetch from mongodb
-    // .lean() returns plain JavaScript objects instead of Mongoose documents
-    //which is good for performance
-    featuredListings = await Listing.find({ isFeatured: true }).lean();
-
-    if (!featuredListings) {
+    if (!featuredListings || featuredListings.length === 0) {
       return res.status(404).json({ message: "No featured listings found" });
     }
 
-    //store in redis for future requests
-    await redis.set("featuredListings", JSON.stringify(featuredListings));
     res.json(featuredListings);
   } catch (error) {
     console.log("Error in getFeaturedListings controller", error.message);
@@ -140,7 +134,6 @@ export const toggleFeaturedListing = async (req,res) =>{
         
     }
 }
-// MATCH LISTINGS BASED ON USER'S SKILL TAGS
 export const getMatchedListingsForUser = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);

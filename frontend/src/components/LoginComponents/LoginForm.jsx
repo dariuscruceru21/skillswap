@@ -1,4 +1,4 @@
-import { useUserStore } from "../stores/useUserStore";
+import { useUserStore } from "../../stores/useUserStore";
 export default function LoginForm() {
   const login = useUserStore((state) => state.login);
   const loading = useUserStore((state) => state.loading);
@@ -12,7 +12,7 @@ export default function LoginForm() {
     await login(email, password);
 
     if (useUserStore.getState().user) {
-      window.location.href = "/";
+      window.location.href = "/homepage";
     }
   };
 

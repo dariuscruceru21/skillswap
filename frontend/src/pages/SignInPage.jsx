@@ -1,8 +1,8 @@
 import React from "react";
-import NavbarLogin from "../components/NavbarLogin";
-import LoginLeftPanel from "../components/LoginLeftPannel";
-import LoginForm from "../components/LoginForm";
-import Footer from "../components/FooterLogin";
+import NavbarLogin from "../components/LoginComponents/NavbarLogin";
+import LoginLeftPanel from "../components/LoginComponents/LoginLeftPannel";
+import LoginForm from "../components/LoginComponents/LoginForm";
+import Footer from "../components/LoginComponents/FooterLogin";
 
 
 const SignInPage = () => {

@@ -1,3 +1,4 @@
+import { Repeat } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function NavbarLogin() {
@@ -7,7 +8,7 @@ export default function NavbarLogin() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <i className="fas fa-exchange-alt text-indigo-600 text-2xl mr-2"></i>
+              <Repeat className="fas fa-exchange-alt text-indigo-600 text-2xl mr-2"/>
               <span className="text-xl font-bold text-gray-900">SkillSwap</span>
             </Link>
           </div>

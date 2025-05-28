@@ -1,8 +1,8 @@
 import { useState } from "react";
-import Navbar from "../components/NavbarSignUp";
-import Footer from "../components/FooterSignUp";
-import InputField from "../components/InputField";
-import LeftPanel from "../components/LeftPanel";
+import Navbar from "../components/SignUpComponents/NavbarSignUp";
+import Footer from "../components/SignUpComponents/FooterSignUp";
+import InputField from "../components/SignUpComponents/InputField";
+import LeftPanel from "../components/SignUpComponents/LeftPanel";
 import { useUserStore } from "../stores/useUserStore";
 
 export default function SignUpPage() {
