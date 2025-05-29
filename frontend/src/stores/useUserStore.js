@@ -25,8 +25,16 @@ export const useUserStore = create((set, get) => ({
     try {
       const response = await api.post("/api/auth/signin", { email, password });
       const { token, ...userData } = response.data;
+      
+      // Store token in localStorage
       localStorage.setItem('token', token);
+      
+      // Set user data in store
       set({ user: userData, loading: false });
+      
+      // Fetch complete user profile
+      await get().fetchProfile();
+      
       toast.success("Logged in!");
       return response.data;
     } catch (error) {
