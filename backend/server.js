@@ -4,7 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname, join, resolve } from 'path';
 import authRoutes from './routes/auth.route.js';
 import listingsRoutes from './routes/listings.route.js';
 import cartRoutes from './routes/cart.route.js';
@@ -46,7 +46,7 @@ app.use(cookieParser());
 // Make io accessible to routes
 app.set('io', io);
 
-// Routes
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/listings", listingsRoutes);
 app.use("/api/cart", cartRoutes);
@@ -57,9 +57,21 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/messages", messageRoutes);
 
+// Health check route
 app.get("/", (req, res) => {
   res.send("API is running");
 });
+
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  const staticPath = resolve(__dirname, '../frontend/dist');
+  app.use(express.static(staticPath));
+  
+  // Handle all other routes by serving index.html
+  app.get('*', (req, res) => {
+    res.sendFile(join(staticPath, 'index.html'));
+  });
+}
 
 // Connect to MongoDB and then start the server
 const startServer = async () => {
