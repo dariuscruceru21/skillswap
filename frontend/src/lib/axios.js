@@ -1,7 +1,9 @@
 import axios from "axios";
 
 const api = axios.create({
-	baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+	baseURL: import.meta.env.PROD 
+		? 'https://skillswap-backend.onrender.com'  // Production backend URL
+		: 'http://localhost:3000',  // Development backend URL
 	withCredentials: true, // Include cookies in requests
 	headers: {
 		'Content-Type': 'application/json',
@@ -29,7 +31,7 @@ api.interceptors.response.use(
 		if (error.response?.status === 401) {
 			// Handle unauthorized access
 			localStorage.removeItem('token');
-			window.location.href = '/login';
+			window.location.href = '/signin';
 		}
 		return Promise.reject(error);
 	}
