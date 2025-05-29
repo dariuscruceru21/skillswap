@@ -4,7 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { fileURLToPath } from 'url';
-import { dirname, join, resolve } from 'path';
+import { dirname, join } from 'path';
 import authRoutes from './routes/auth.route.js';
 import listingsRoutes from './routes/listings.route.js';
 import cartRoutes from './routes/cart.route.js';
@@ -43,6 +43,12 @@ const corsOptions = {
 // Apply CORS middleware
 app.use(cors(corsOptions));
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -62,19 +68,29 @@ app.use("/api/messages", messageRoutes);
 
 // Health check route
 app.get("/", (req, res) => {
-  res.send("API is running");
+  res.json({ status: "ok", message: "API is running" });
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  const staticPath = resolve(__dirname, '../frontend/dist');
-  app.use(express.static(staticPath));
-  
-  // Handle all other routes by serving index.html
-  app.get('*', (req, res) => {
-    res.sendFile(join(staticPath, 'index.html'));
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    error: {
+      message: err.message || 'Internal Server Error',
+      status: err.status || 500
+    }
   });
-}
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: {
+      message: 'Route not found',
+      status: 404
+    }
+  });
+});
 
 // Connect to MongoDB and then start the server
 const startServer = async () => {
