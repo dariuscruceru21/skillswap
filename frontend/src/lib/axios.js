@@ -34,17 +34,11 @@ api.interceptors.response.use(
 			
 			try {
 				// Try to refresh the token
-				const response = await api.post('/api/auth/refresh-token');
-				const { token } = response.data;
-				
-				if (token) {
-					localStorage.setItem('token', token);
-					originalRequest.headers.Authorization = `Bearer ${token}`;
-					return api(originalRequest);
-				}
+				await api.post('/api/auth/refresh-token');
+				// Retry the original request
+				return api(originalRequest);
 			} catch (refreshError) {
-				// If refresh token fails, only then redirect to signin
-				localStorage.removeItem('token');
+				// If refresh token fails, redirect to signin
 				window.location.href = '/signin';
 			}
 		}

@@ -25,15 +25,15 @@ const storeRefreshToken = async (userId, refreshToken) => {
 
 const setCookies = (res, accessToken, refreshToken) => {
   res.cookie("accessToken", accessToken, {
-    httpOnly: true, //prevent XXS attacks
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict", //prevent CSRF attack
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
     maxAge: 15 * 60 * 1000, // 15 minutes
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 };
@@ -129,39 +129,37 @@ export const logout = async (req, res) => {
 //refresh the acces token
 export const refreshToken = async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
-
+    const { refreshToken } = req.cookies;
+    
     if (!refreshToken) {
       return res.status(401).json({ message: "No refresh token provided" });
     }
+
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-    const storedRefreshToken = await redis.get(
-      `refreshToken:${decoded.userId}`
-    );
-    if (storedRefreshToken !== refreshToken) {
-      return res.status(403).json({ message: "Invalid refresh token" });
+    const storedRefreshToken = await redis.get(`refreshToken:${decoded.userId}`);
+
+    if (!storedRefreshToken || storedRefreshToken !== refreshToken) {
+      return res.status(401).json({ message: "Invalid refresh token" });
     }
 
-    const accessToken = jwt.sign(
-      { userId: decoded.userId },
-      process.env.ACCESS_TOKEN_SECRET,
-      {
-        expiresIn: "15m",
-      }
-    );
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
-    res.json({ message: "Access token refreshed successfully" });
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // Generate new tokens
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateTokens(user._id);
+    
+    // Store new refresh token in Redis
+    await storeRefreshToken(user._id, newRefreshToken);
+
+    // Set new cookies
+    setCookies(res, newAccessToken, newRefreshToken);
+
+    res.status(200).json({ message: "Token refreshed successfully" });
   } catch (error) {
-    console.log("Error in refresh token controller", error.message);
-    res.status(500).json({
-      message: "Error refreshing access token",
-      error: error.message,
-    });
+    console.error("Refresh token error:", error);
+    res.status(401).json({ message: "Invalid refresh token" });
   }
 };
 
