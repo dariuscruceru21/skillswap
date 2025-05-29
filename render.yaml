@@ -8,12 +8,15 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://skillswap-backend.onrender.com
 
   - type: web
     name: skillswap-backend
     env: node
     buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
+    startCommand: cd backend && node server.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -32,4 +35,6 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
       - key: OPENAI_API_KEY
-        sync: false 
+        sync: false
+      - key: FRONTEND_URL
+        value: https://skillswap-frontend.onrender.com 
