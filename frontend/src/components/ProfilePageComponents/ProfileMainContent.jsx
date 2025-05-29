@@ -37,6 +37,7 @@ function getInitials(name) {
 export default function ProfileMainContent({ activeTab }) {
   const { user, fetchProfile } = useUserStore();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showAllSkills, setShowAllSkills] = useState(false);
   const [editFormData, setEditFormData] = useState({
     occupation: '',
     education: '',
@@ -110,6 +111,20 @@ export default function ProfileMainContent({ activeTab }) {
       toast.error(error.response?.data?.message || 'Error updating profile');
     }
   };
+
+  const acquiredSkills = user.passedQuizzes?.map(submission => ({
+    name: submission.quiz?.skillTag,
+    score: submission.score,
+    passed: submission.passed,
+  })).filter(skill => skill.name) || [];
+
+  // Function to get random skills
+  const getRandomSkills = (skills, count) => {
+    const shuffled = [...skills].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  };
+
+  const displayedSkills = showAllSkills ? acquiredSkills : getRandomSkills(acquiredSkills, 3);
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -229,49 +244,56 @@ export default function ProfileMainContent({ activeTab }) {
                 </div>
               </div>
 
-              {/* Featured Skills */}
+              {/* Featured Skills - Now showing skills from passed quizzes */}
               <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-bold text-gray-900">Featured Skills</h2>
-                  <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500">See all</button>
+                  <h2 className="text-lg font-bold text-gray-900">Acquired Skills (from Quizzes)</h2>
+                  {acquiredSkills.length > 3 && (
+                    <button
+                      onClick={() => setShowAllSkills(!showAllSkills)}
+                      className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                    >
+                      {showAllSkills ? "Show Random 3" : `See all (${acquiredSkills.length})`}
+                    </button>
+                  )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(user.featuredSkills ?? []).map((skill, idx) => (
-                    <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors">
-                      <div className="flex items-center mb-3">
-                        <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800">
-                          {skill.icon === "guitar" ? <Guitar size={20} /> : <Laptop size={20} />}
+
+                {acquiredSkills.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {displayedSkills.map((skill, idx) => (
+                      <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors">
+                        <div className="flex items-center mb-3">
+                          <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800">
+                            <Laptop size={20} />
+                          </div>
+                          <h3 className="ml-3 font-medium text-gray-900">{skill.name}</h3>
                         </div>
-                        <h3 className="ml-3 font-medium text-gray-900">{skill.name}</h3>
+                        <p className={`px-2 py-1 text-xs font-semibold rounded-full inline-block ${
+                          skill.passed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        }`}>
+                          {skill.passed ? "Passed" : "Failed"} (Score: {skill.score}%)
+                        </p>
                       </div>
-                      <p className="text-sm text-gray-500 mb-3">{skill.description}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {(skill.tags ?? []).map((tag) => (
-                          <span key={tag} className="px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">{tag}</span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : ( 
+                  <div className="text-gray-400 text-center">No skills acquired from quizzes yet.</div>
+                )}
               </div>
 
               {/* Recent Reviews */}
               <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-bold text-gray-900">Recent Reviews</h2>
-                  {/* Optional: Add a button to view all reviews if implemented */}
-                  {/* <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500">See all</button> */}
                 </div>
                 <div className="space-y-4">
                   {(user.reviews ?? []).length > 0 ? (
                     (user.reviews ?? []).map((review, idx) => {
-                      // Safely get stars as a number, default to 0
                       const stars = Number(review.stars) || 0;
                       const fullStars = Math.floor(stars);
                       const halfStar = stars % 1 >= 0.5;
-                      // Use populated reviewer name if available, fallback to "User"
                       const reviewerName = review.reviewerId?.name || "User";
-                      const reviewComment = review.comment || "No comment provided."; // Safely get comment
+                      const reviewComment = review.comment || "No comment provided.";
                       return (
                         <div key={idx} className="bg-gray-50 rounded-lg p-4 transition-all duration-300 review-card">
                           <div className="flex items-start">

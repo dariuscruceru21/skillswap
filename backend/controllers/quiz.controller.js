@@ -85,7 +85,6 @@ export const submitQuiz = async (req, res) => {
     if (passed) {
       await User.findByIdAndUpdate(userId, {
         skillTested: true,
-        $addToSet: { skillTags: quiz.skillTag }, // avoid duplicates
         $push: { passedQuizzes: submission._id }, // Add submission ID to passedQuizzes
       });
     }

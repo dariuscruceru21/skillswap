@@ -25,7 +25,7 @@ const listingsSchema = new mongoose.Schema(
     },
     image: {
       type: String, // Cloudinary URL or base64
-      required: [true, "Image is required"],
+      required: [false, "Image is required"],
     },
     isFeatured: {
       type: Boolean,

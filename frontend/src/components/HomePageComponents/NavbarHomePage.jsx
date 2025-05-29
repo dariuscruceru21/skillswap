@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Bell, Menu, X, Repeat } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useUserStore } from "../../stores/useUserStore";
 
 function getInitials(name) {
@@ -18,6 +18,7 @@ export default function NavbarHomePage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     fetchProfile();
@@ -44,6 +45,10 @@ export default function NavbarHomePage() {
     navigate("/signin");
   };
 
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,14 +61,54 @@ export default function NavbarHomePage() {
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <Link to="/homepage" className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Home</Link>
-              <Link to="/explore" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Explore</Link>
-              <Link to="/messages" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Messages</Link>
-              <Link to="/skill" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">My Skills</Link>
+              <Link
+                to="/homepage"
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive("/homepage")
+                    ? "border-indigo-500 text-gray-900"
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                }`}
+              >
+                Home
+              </Link>
+              <Link
+                to="/explore"
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive("/explore")
+                    ? "border-indigo-500 text-gray-900"
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                }`}
+              >
+                Explore
+              </Link>
+              <Link
+                to="/messages"
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive("/messages")
+                    ? "border-indigo-500 text-gray-900"
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                }`}
+              >
+                Messages
+              </Link>
+              <Link
+                to="/skill"
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive("/skill")
+                    ? "border-indigo-500 text-gray-900"
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                }`}
+              >
+                My Skills
+              </Link>
               {user?.role === "admin" && (
                 <Link
                   to="/admin"
-                  className="border-transparent text-indigo-600 hover:border-indigo-300 hover:text-indigo-800 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    isActive("/admin")
+                      ? "border-indigo-500 text-gray-900"
+                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  }`}
                 >
                   Admin Dashboard
                 </Link>
@@ -103,13 +148,37 @@ export default function NavbarHomePage() {
                     <p className="text-sm text-gray-700">Signed in as</p>
                     <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
                   </div>
-                  <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setDropdownOpen(false)}>
+                  <Link
+                    to="/profile"
+                    className={`block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                      isActive("/profile")
+                        ? "border-indigo-500 text-gray-900"
+                        : ""
+                    }`}
+                    onClick={() => setDropdownOpen(false)}
+                  >
                     Your Profile
                   </Link>
-                  <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setDropdownOpen(false)}>
+                  <Link
+                    to="/settings"
+                    className={`block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                      isActive("/settings")
+                        ? "border-indigo-500 text-gray-900"
+                        : ""
+                    }`}
+                    onClick={() => setDropdownOpen(false)}
+                  >
                     Settings
                   </Link>
-                  <Link to="/saved" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setDropdownOpen(false)}>
+                  <Link
+                    to="/saved"
+                    className={`block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                      isActive("/saved")
+                        ? "border-indigo-500 text-gray-900"
+                        : ""
+                    }`}
+                    onClick={() => setDropdownOpen(false)}
+                  >
                     Saved Items
                   </Link>
                   <div className="border-t border-gray-100"></div>
@@ -142,10 +211,46 @@ export default function NavbarHomePage() {
       {mobileMenuOpen && (
         <div className="sm:hidden" id="mobile-menu">
           <div className="pt-2 pb-3 space-y-1">
-            <Link to="/" className="bg-indigo-50 border-indigo-500 text-indigo-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Home</Link>
-            <Link to="/explore" className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Explore</Link>
-            <Link to="/messages" className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Messages</Link>
-            <Link to="/skill" className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">My Skills</Link>
+            <Link
+              to="/homepage"
+              className={`bg-indigo-50 border-indigo-500 text-indigo-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                isActive("/homepage")
+                  ? "bg-indigo-50 border-indigo-500 text-indigo-700"
+                  : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+              }`}
+            >
+              Home
+            </Link>
+            <Link
+              to="/explore"
+              className={`border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                isActive("/explore")
+                  ? "bg-indigo-50 border-indigo-500 text-indigo-700"
+                  : ""
+              }`}
+            >
+              Explore
+            </Link>
+            <Link
+              to="/messages"
+              className={`border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                isActive("/messages")
+                  ? "bg-indigo-50 border-indigo-500 text-indigo-700"
+                  : ""
+              }`}
+            >
+              Messages
+            </Link>
+            <Link
+              to="/skill"
+              className={`border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                isActive("/skill")
+                  ? "bg-indigo-50 border-indigo-500 text-indigo-700"
+                  : ""
+              }`}
+            >
+              My Skills
+            </Link>
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="flex items-center px-4">
@@ -167,8 +272,26 @@ export default function NavbarHomePage() {
               </button>
             </div>
             <div className="mt-3 space-y-1">
-              <Link to="/profile" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Your Profile</Link>
-              <Link to="/settings" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Settings</Link>
+              <Link
+                to="/profile"
+                className={`block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 ${
+                  isActive("/profile")
+                    ? "border-indigo-500 text-gray-900"
+                    : ""
+                }`}
+              >
+                Your Profile
+              </Link>
+              <Link
+                to="/settings"
+                className={`block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 ${
+                  isActive("/settings")
+                    ? "border-indigo-500 text-gray-900"
+                    : ""
+                }`}
+              >
+                Settings
+              </Link>
               <button
                 onClick={handleSignOut}
                 className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"

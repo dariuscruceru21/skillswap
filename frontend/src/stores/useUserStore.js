@@ -1,66 +1,79 @@
 import { create } from "zustand";
-import axios from "../lib/axios";
+import api from "../lib/axios";
 import { toast } from "react-hot-toast";
 
 export const useUserStore = create((set, get) => ({
   user: null,
   loading: false,
+  error: null,
   checkingAuth: true,
+
+  setUser: (user) => set({ user }),
 
   fetchProfile: async () => {
     set({ loading: true });
     try {
-      const res = await axios.get("/auth/profile"); // Adjust endpoint if needed
+      const res = await api.get("/api/auth/profile");
       set({ user: res.data, loading: false });
     } catch (e) {
       set({ loading: false });
     }
   },
-  signup: async ({ name, email, password, confirmPassword}) => {
-    set({ loading: true });
-
-    if (password !== confirmPassword) {
-      set({ loading: false });
-      return toast.error("Passwords do not match");
-    }
-
-    try {
-      const res = await axios.post("/auth/signup", { name, email, password});
-      set({ user: res.data, loading: false });
-      toast.success("Account created!");
-    } catch (error) {
-      set({ loading: false });
-      toast.error(error.response?.data?.message || "An error occurred");
-    }
-  },
 
   login: async (email, password) => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
-      const res = await axios.post("/auth/signin", { email, password });
-      set({ user: res.data, loading: false });
+      const response = await api.post("/api/auth/signin", { email, password });
+      set({ user: response.data, loading: false });
       toast.success("Logged in!");
+      return response.data;
     } catch (error) {
-      set({ loading: false });
+      set({ 
+        loading: false, 
+        error: error.response?.data?.message || "Login failed" 
+      });
       toast.error(error.response?.data?.message || "Invalid email or password");
       throw error;
     }
   },
 
-  logout: async () => {
+  signup: async (userData) => {
+    set({ loading: true, error: null });
     try {
-      await axios.post("/auth/logout");
-      set({ user: null });
+      const response = await api.post("/api/auth/signup", userData);
+      set({ user: response.data, loading: false });
+      toast.success("Account created!");
+      return response.data;
+    } catch (error) {
+      set({ 
+        loading: false, 
+        error: error.response?.data?.message || "Signup failed" 
+      });
+      toast.error(error.response?.data?.message || "An error occurred");
+      throw error;
+    }
+  },
+
+  logout: async () => {
+    set({ loading: true, error: null });
+    try {
+      await api.post("/api/auth/logout");
+      set({ user: null, loading: false });
       toast.success("Logged out!");
     } catch (error) {
+      set({ 
+        loading: false, 
+        error: error.response?.data?.message || "Logout failed" 
+      });
       toast.error(error.response?.data?.message || "An error occurred during logout");
+      throw error;
     }
   },
 
   checkAuth: async () => {
     set({ checkingAuth: true });
     try {
-      const response = await axios.get("/auth/profile");
+      const response = await api.get("/api/auth/profile");
       set({ user: response.data, checkingAuth: false });
     } catch (error) {
       set({ checkingAuth: false, user: null });
@@ -68,15 +81,46 @@ export const useUserStore = create((set, get) => ({
   },
 
   refreshToken: async () => {
-    // Prevent multiple simultaneous refresh attempts
-    if (get().checkingAuth) return;
-    set({ checkingAuth: true });
+    set({ loading: true, error: null });
     try {
-      const response = await axios.post("/auth/refresh-token");
-      set({ checkingAuth: false });
+      const response = await api.post("/api/auth/refresh-token");
+      set({ loading: false });
       return response.data;
     } catch (error) {
-      set({ user: null, checkingAuth: false });
+      set({ 
+        loading: false, 
+        error: error.response?.data?.message || "Token refresh failed" 
+      });
+      throw error;
+    }
+  },
+
+  getProfile: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await api.get("/api/auth/profile");
+      set({ user: response.data, loading: false });
+      return response.data;
+    } catch (error) {
+      set({ 
+        loading: false, 
+        error: error.response?.data?.message || "Failed to fetch profile" 
+      });
+      throw error;
+    }
+  },
+
+  updateProfile: async (userData) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await api.put(`/api/auth/users/${userData._id}`, userData);
+      set({ user: response.data, loading: false });
+      return response.data;
+    } catch (error) {
+      set({ 
+        loading: false, 
+        error: error.response?.data?.message || "Failed to update profile" 
+      });
       throw error;
     }
   },
@@ -85,7 +129,7 @@ export const useUserStore = create((set, get) => ({
 // Axios interceptor for token refresh
 let refreshPromise = null;
 
-axios.interceptors.response.use(
+api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
@@ -96,7 +140,7 @@ axios.interceptors.response.use(
         // If a refresh is already in progress, wait for it to complete
         if (refreshPromise) {
           await refreshPromise;
-          return axios(originalRequest);
+          return api(originalRequest);
         }
 
         // Start a new refresh process
@@ -104,7 +148,7 @@ axios.interceptors.response.use(
         await refreshPromise;
         refreshPromise = null;
 
-        return axios(originalRequest);
+        return api(originalRequest);
       } catch (refreshError) {
         useUserStore.getState().logout();
         return Promise.reject(refreshError);

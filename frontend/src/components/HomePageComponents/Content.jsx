@@ -50,6 +50,7 @@ function getInitials(name) {
 
 export default function Content() {
   const [search, setSearch] = useState("");
+  const [selectedListing, setSelectedListing] = useState(null);
   const { listings, loading, fetchFeaturedListings } = useListingStore();
 
   useEffect(() => {
@@ -130,6 +131,7 @@ export default function Content() {
                         <span className="text-gray-600 ml-1">{listing.owner?.rating ?? "N/A"}</span>
                       </div>
                       <button
+                        onClick={() => setSelectedListing(listing)}
                         className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white gradient-bg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                       >
                         Connect
@@ -140,6 +142,57 @@ export default function Content() {
               );
             })
           )}
+        </div>
+      )}
+
+      {/* Listing Details Modal */}
+      {selectedListing && (
+        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 animate-fadeIn">
+          <div className="relative top-20 mx-auto p-6 border w-[600px] shadow-2xl rounded-xl bg-white transform transition-all animate-slideIn">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold text-gray-900">Listing Details</h3>
+              <button
+                onClick={() => setSelectedListing(null)}
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium text-gray-500">Name</h4>
+                <p className="mt-1 text-lg text-gray-900">{selectedListing.name}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-500">Category</h4>
+                <p className="mt-1 text-lg text-gray-900">{selectedListing.category}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-500">Description</h4>
+                <p className="mt-1 text-lg text-gray-900">{selectedListing.description}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-500">Owner Details</h4>
+                <div className="mt-2 space-y-2">
+                  <p className="text-lg text-gray-900">Name: {selectedListing.owner?.name}</p>
+                  <p className="text-lg text-gray-900">Email: {selectedListing.owner?.email}</p>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  onClick={() => setSelectedListing(null)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                >
+                  Send Message
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </main>

@@ -8,6 +8,8 @@ import ProfilePage from "./pages/ProfilePage";
 import MySkillsPage from "./pages/MySkillsPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import QuizPage from "./pages/QuizPage"; // We will create this next
+import ExplorePage from "./pages/ExplorePage";
+
 
 function App() {
   return (
@@ -39,11 +41,12 @@ function App() {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/homepage" element={<HomePage />} />
+        <Route path="/explore" element={<ExplorePage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/skill" element={<MySkillsPage />} />
         <Route path="/admin/*" element={<AdminDashboard />} />
-        {/* Add a route for the Quiz Page */}
         <Route path="/quiz/:quizId" element={<QuizPage />} />
+        
       </Routes>
     </div>
   );

@@ -4,8 +4,18 @@ import Listing from "../models/listing.model.js";
 
 export const getAllListings = async (req, res) => {
   try {
-    const listings = await Listing.find({}).populate('owner', 'name');
+    const listings = await Listing.find({});
     res.json({ listings });
+  } catch (error) {
+    console.log("Error in getAllListings controller", error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAllListingsFoExplore = async (req, res) => {
+  try {
+    const listings = await Listing.find({}).populate('owner', 'name rating email');
+    res.json(listings );
   } catch (error) {
     console.log("Error in getAllListings controller", error.message);
     res.status(500).json({ message: error.message });

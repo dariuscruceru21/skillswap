@@ -5,8 +5,44 @@ export default function Pagination({ totalResults = 24, resultsPerPage = 6 }) {
   const [page, setPage] = useState(1);
   const totalPages = Math.ceil(totalResults / resultsPerPage);
 
-  // Simple page numbers logic (expand as needed)
-  const pageNumbers = [1, 2, 3, "...", totalPages];
+  // Generate page numbers with proper spacing
+  const getPageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      // If total pages is 5 or less, show all pages
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      // Show ellipsis if needed
+      if (page > 3) {
+        pages.push('...');
+      }
+      
+      // Show current page and one before and after
+      for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
+        if (!pages.includes(i)) {
+          pages.push(i);
+        }
+      }
+      
+      // Show ellipsis if needed
+      if (page < totalPages - 2) {
+        pages.push('...');
+      }
+      
+      // Always show last page
+      if (!pages.includes(totalPages)) {
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
 
   return (
     <div className="mt-8 flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
@@ -41,14 +77,14 @@ export default function Pagination({ totalResults = 24, resultsPerPage = 6 }) {
             {pageNumbers.map((num, idx) =>
               num === "..." ? (
                 <span
-                  key={idx}
+                  key={`ellipsis-${idx}`}
                   className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0"
                 >
                   ...
                 </span>
               ) : (
                 <button
-                  key={num}
+                  key={`page-${num}`}
                   onClick={() => setPage(num)}
                   aria-current={page === num ? "page" : undefined}
                   className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
