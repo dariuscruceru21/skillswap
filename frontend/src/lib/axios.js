@@ -29,7 +29,7 @@ api.interceptors.response.use(
 		const originalRequest = error.config;
 		
 		// If the error is 401 and we haven't tried to refresh the token yet
-		if (error.response?.status === 401 && !originalRequest._retry) {
+		if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/refresh-token')) {
 			originalRequest._retry = true;
 			
 			try {
