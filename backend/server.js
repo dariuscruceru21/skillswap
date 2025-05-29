@@ -31,9 +31,9 @@ const io = initializeSocket(httpServer);
 
 // CORS configuration
 const corsOptions = {
-  origin: [
-    'https://skillswap-3ms1.onrender.com',
-    'http://localhost:5173'
+  origin: process.env.FRONTEND_URL || [
+    'http://localhost:5173',
+    'https://skillswap-3ms1.onrender.com'
   ],
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"],

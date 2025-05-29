@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-	baseURL: import.meta.env.VITE_API_URL || 'https://skillswap-backend-7yxq.onrender.com',
+	baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
 	withCredentials: true, // Include cookies in requests
 	headers: {
 		'Content-Type': 'application/json',
@@ -11,10 +11,7 @@ const api = axios.create({
 // Add a request interceptor to include the auth token
 api.interceptors.request.use(
 	(config) => {
-		const token = localStorage.getItem('token');
-		if (token) {
-			config.headers.Authorization = `Bearer ${token}`;
-		}
+		// We don't need to manually add the token here since we're using cookies
 		return config;
 	},
 	(error) => {
