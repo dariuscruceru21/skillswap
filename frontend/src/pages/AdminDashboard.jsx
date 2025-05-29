@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '../lib/axios';
 import Sidebar from '../components/AdminDashboardComponents/Sidebar';
 import Header from '../components/AdminDashboardComponents/Header';
 import NavbarHomePager from '../components/HomePageComponents/NavbarHomePage';
@@ -31,11 +31,7 @@ const AdminDashboard = () => {
     try {
       setLoading(prev => ({ ...prev, users: true }));
       setError(prev => ({ ...prev, users: null }));
-      const response = await axios.get('/api/auth/users', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
-      });
+      const response = await api.get('/api/auth/users');
       setUsers(response.data || []);
     } catch (err) {
       setError(prev => ({ ...prev, users: err.response?.data?.message || 'Error fetching users' }));
@@ -51,11 +47,7 @@ const AdminDashboard = () => {
     try {
       setLoading(prev => ({ ...prev, quizzes: true }));
       setError(prev => ({ ...prev, quizzes: null }));
-      const response = await axios.get('/api/quiz', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
-      });
+      const response = await api.get('/api/quiz');
       setQuizzes(response.data || []);
     } catch (err) {
       setError(prev => ({ ...prev, quizzes: err.response?.data?.message || 'Error fetching quizzes' }));
@@ -71,11 +63,7 @@ const AdminDashboard = () => {
     try {
       setLoading(prev => ({ ...prev, listings: true }));
       setError(prev => ({ ...prev, listings: null }));
-      const response = await axios.get('/api/listings', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
-      });
+      const response = await api.get('/api/listings');
       setListings(response.data?.listings || []);
     } catch (err) {
       setError(prev => ({ ...prev, listings: err.response?.data?.message || 'Error fetching listings' }));
