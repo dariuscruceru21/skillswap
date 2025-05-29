@@ -4,6 +4,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import NavbarHomePage from "../components/HomePageComponents/NavbarHomePage";
 import Footer from "../components/ProfilePageComponents/ProfileFooter";
+import api from "../lib/axios";
 
 export default function QuizPage() {
   const { quizId } = useParams();
@@ -19,7 +20,7 @@ export default function QuizPage() {
       try {
         setLoading(true);
         // Fetch quiz details (excluding correct answers for security on frontend)
-        const response = await axios.get(`/api/quiz/${quizId}`);
+        const response = await api.get(`/api/quiz/${quizId}`);
         setQuiz(response.data);
         setUserAnswers(new Array(response.data.questions.length).fill(null)); // Initialize answers with null
       } catch (error) {
@@ -44,7 +45,7 @@ export default function QuizPage() {
   const handleSubmitQuiz = async () => {
     try {
       setLoading(true);
-      const response = await axios.post(`/api/quiz/${quizId}/submit`, { answers: userAnswers });
+      const response = await api.post(`/api/quiz/${quizId}/submit`, { answers: userAnswers });
       setSubmissionResult(response.data);
       setSubmitted(true);
       toast.success(response.data.message);

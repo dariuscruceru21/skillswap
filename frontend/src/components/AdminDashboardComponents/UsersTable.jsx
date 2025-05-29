@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 
 const UsersTable = ({ users = [], onUserUpdate }) => {
@@ -25,11 +25,7 @@ const UsersTable = ({ users = [], onUserUpdate }) => {
   const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await axios.delete(`/api/auth/users/${userId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
+        await api.delete(`/api/auth/users/${userId}`);
         toast.success('User deleted successfully');
         onUserUpdate(); // Refresh the users list
       } catch (error) {
@@ -43,19 +39,11 @@ const UsersTable = ({ users = [], onUserUpdate }) => {
     try {
       if (editingUser) {
         // Update existing user
-        await axios.put(`/api/auth/users/${editingUser._id}`, formData, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
+        await api.put(`/api/auth/users/${editingUser._id}`, formData);
         toast.success('User updated successfully');
       } else {
         // Create new user
-        await axios.post('/api/auth/users', formData, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
+        await api.post('/api/auth/users', formData);
         toast.success('User created successfully');
       }
       setIsModalOpen(false);
