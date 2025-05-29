@@ -1,10 +1,12 @@
 import { useUserStore } from "../../stores/useUserStore";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginForm() {
   const login = useUserStore((state) => state.login);
   const loading = useUserStore((state) => state.loading);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -15,10 +17,7 @@ export default function LoginForm() {
     try {
       // Call Zustand signin
       await login(email, password);
-
-      if (useUserStore.getState().user) {
-        window.location.href = "/homepage";
-      }
+      navigate("/homepage");
     } catch (error) {
       setError("Invalid email or password. Please try again.");
     }

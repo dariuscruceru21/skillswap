@@ -24,7 +24,9 @@ export const useUserStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await api.post("/api/auth/signin", { email, password });
-      set({ user: response.data, loading: false });
+      const { token, ...userData } = response.data;
+      localStorage.setItem('token', token);
+      set({ user: userData, loading: false });
       toast.success("Logged in!");
       return response.data;
     } catch (error) {
