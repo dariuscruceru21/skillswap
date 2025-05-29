@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../lib/axios";
 import { useUserStore } from "../../stores/useUserStore";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +20,7 @@ export default function SkillsLearnSection() {
   const fetchQuizzes = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("/api/quiz");
+      const response = await api.get("/api/quiz");
       setQuizzes(response.data);
     } catch (error) {
       toast.error("Error fetching quizzes");
@@ -32,7 +32,7 @@ export default function SkillsLearnSection() {
 
   const handleStartQuiz = async (quizId) => {
     try {
-      const response = await axios.get(`/api/quiz/${quizId}`);
+      const response = await api.get(`/api/quiz/${quizId}`);
       navigate(`/quiz/${quizId}`);
     } catch (error) {
       toast.error("Error starting quiz");

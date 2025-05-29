@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 
 const ListingsTable = ({ listings = [], onListingUpdate }) => {
@@ -28,11 +28,7 @@ const ListingsTable = ({ listings = [], onListingUpdate }) => {
   const handleDelete = async (listingId) => {
     if (window.confirm('Are you sure you want to delete this listing?')) {
       try {
-        await axios.delete(`/api/listings/${listingId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
+        await api.delete(`/api/listings/${listingId}`);
         toast.success('Listing deleted successfully');
         onListingUpdate(); // Refresh the listings list
       } catch (error) {
@@ -46,20 +42,12 @@ const ListingsTable = ({ listings = [], onListingUpdate }) => {
     try {
       if (editingListing) {
         // Update existing listing
-        await axios.put(`/api/listings/${editingListing._id}`, formData, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
+        await api.put(`/api/listings/${editingListing._id}`, formData);
         toast.success('Listing updated successfully');
         onListingUpdate(); // Refresh the listings list after update
       } else {
         // Create new listing
-        await axios.post('/api/listings', formData, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
+        await api.post('/api/listings', formData);
         toast.success('Listing created successfully');
         onListingUpdate(); // Refresh the listings list after create
       }
@@ -87,11 +75,7 @@ const ListingsTable = ({ listings = [], onListingUpdate }) => {
 
   const toggleFeatured = async (listing) => {
     try {
-      await axios.patch(`/api/listings/${listing._id}`, { isFeatured: !listing.isFeatured }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
-      });
+      await api.patch(`/api/listings/${listing._id}`, { isFeatured: !listing.isFeatured });
       toast.success(`Listing ${listing.isFeatured ? 'removed from' : 'marked as'} featured`);
       onListingUpdate(); // Refresh the listings list
     } catch (error) {

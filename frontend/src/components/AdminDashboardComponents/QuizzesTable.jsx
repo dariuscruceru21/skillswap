@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../lib/axios';
 import toast from 'react-hot-toast';
 
 const QuizzesTable = ({ quizzes = [], onQuizUpdate }) => {
@@ -29,11 +29,7 @@ const QuizzesTable = ({ quizzes = [], onQuizUpdate }) => {
   const handleDelete = async (quizId) => {
     if (window.confirm('Are you sure you want to delete this quiz?')) {
       try {
-        await axios.delete(`/api/quiz/${quizId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
+        await api.delete(`/api/quiz/${quizId}`);
         toast.success('Quiz deleted successfully');
         onQuizUpdate(); // Refresh the quizzes list
       } catch (error) {
@@ -47,19 +43,11 @@ const QuizzesTable = ({ quizzes = [], onQuizUpdate }) => {
     try {
       if (editingQuiz) {
         // Update existing quiz
-        await axios.put(`/api/quiz/${editingQuiz._id}`, formData, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
+        await api.put(`/api/quiz/${editingQuiz._id}`, formData);
         toast.success('Quiz updated successfully');
       } else {
         // Create new quiz
-        await axios.post('/api/quiz', formData, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-          }
-        });
+        await api.post('/api/quiz', formData);
         toast.success('Quiz created successfully');
       }
       setIsModalOpen(false);
@@ -328,7 +316,7 @@ function GenerateQuizModal({ open, onClose, onQuizCreated }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post("/api/quiz/generate-ai", {
+      const res = await api.post("/api/quiz/generate-ai", {
         title,
         skillTag,
         numQuestions,
@@ -336,7 +324,7 @@ function GenerateQuizModal({ open, onClose, onQuizCreated }) {
       onQuizCreated(res.data); // Refresh the quiz list
       onClose();
     } catch (err) {
-      alert("Failed to generate quiz");
+      toast.error("Failed to generate quiz");
     } finally {
       setLoading(false);
     }
