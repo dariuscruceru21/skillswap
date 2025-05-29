@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useUserStore } from "../../stores/useUserStore";
-import { Paperclip, Send, Phone, Video, MoreVertical } from "lucide-react";
+import { Paperclip, Send, MoreVertical, Star } from "lucide-react";
+import axios from "axios";
 
 export default function ChatWindow({ selectedUser, messages, onSendMessage, currentUser }) {
   const [newMessage, setNewMessage] = useState("");
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewStars, setReviewStars] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
   const messagesEndRef = useRef(null);
 
   const formatTime = (date) => {
@@ -43,6 +48,30 @@ export default function ChatWindow({ selectedUser, messages, onSendMessage, curr
     }
   };
 
+  const handleReview = async (e) => {
+    e.preventDefault();
+    if (reviewStars < 0 || reviewStars > 5 || !reviewComment.trim()) {
+      alert("Please provide a rating from 0-5 and a comment.");
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      await axios.post(`/api/auth/users/${selectedUser._id}/reviews`, {
+        reviewerId: currentUser._id,
+        stars: reviewStars,
+        comment: reviewComment,
+      });
+      setIsReviewModalOpen(false);
+      setReviewStars(0);
+      setReviewComment("");
+      alert("Review submitted!");
+    } catch (error) {
+      alert("Error submitting review");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   if (!selectedUser) {
     return (
       <div className="h-full bg-white rounded-lg shadow-md flex items-center justify-center">
@@ -76,11 +105,11 @@ export default function ChatWindow({ selectedUser, messages, onSendMessage, curr
           <p className="text-xs text-gray-500">Online</p>
         </div>
         <div className="ml-auto flex space-x-2">
-          <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100">
-            <Phone size={20} />
-          </button>
-          <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100">
-            <Video size={20} />
+          <button
+            className="p-2 rounded-full text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-medium border border-indigo-100"
+            onClick={() => setIsReviewModalOpen(true)}
+          >
+            Leave a Review
           </button>
           <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100">
             <MoreVertical size={20} />
@@ -160,18 +189,81 @@ export default function ChatWindow({ selectedUser, messages, onSendMessage, curr
           <button
             type="submit"
             className="p-2 rounded-full text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-            onClick={(e) => {
-              e.preventDefault();
-              if (newMessage.trim()) {
-                onSendMessage(newMessage);
-                setNewMessage("");
-              }
-            }}
           >
             <Send size={20} />
           </button>
         </form>
       </div>
+
+      {/* Review Modal */}
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 animate-fadeIn flex items-center justify-center">
+          <div className="relative top-20 mx-auto p-6 border w-[500px] shadow-2xl rounded-xl bg-white transform transition-all animate-slideIn">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold text-gray-900">Leave a Review for {selectedUser.name}</h3>
+              <button
+                onClick={() => setIsReviewModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <form
+              onSubmit={handleReview}
+              className="space-y-6"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+                <div className="flex items-center space-x-1 mb-2">
+                  {[0, 1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      type="button"
+                      key={star}
+                      onClick={() => setReviewStars(star)}
+                      className={
+                        star <= reviewStars
+                          ? "text-yellow-400"
+                          : "text-gray-300 hover:text-yellow-400"
+                      }
+                    >
+                      <Star size={28} fill={star <= reviewStars ? "currentColor" : "none"} />
+                    </button>
+                  ))}
+                  <span className="ml-2 text-sm">{reviewStars} / 5</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  rows={4}
+                  placeholder="Write your review..."
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsReviewModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  disabled={submittingReview}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                  disabled={submittingReview}
+                >
+                  {submittingReview ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
