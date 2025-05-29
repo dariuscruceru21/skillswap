@@ -10,6 +10,7 @@ const QuizzesTable = ({ quizzes = [], onQuizUpdate }) => {
     skillTag: '',
     questions: [{ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 }]
   });
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
 
   const handleEdit = (quiz) => {
     setEditingQuiz(quiz);
@@ -84,7 +85,7 @@ const QuizzesTable = ({ quizzes = [], onQuizUpdate }) => {
     } else {
       setFormData(prev => ({
         ...prev,
-        questions: prev.questions.map((q, idx) => 
+        questions: prev.questions.map((q, idx) =>
           idx === questionIndex ? { ...q, [field]: value } : q
         )
       }));
@@ -94,10 +95,10 @@ const QuizzesTable = ({ quizzes = [], onQuizUpdate }) => {
   const handleOptionChange = (questionIndex, optionIndex, value) => {
     setFormData(prev => ({
       ...prev,
-      questions: prev.questions.map((q, idx) => 
+      questions: prev.questions.map((q, idx) =>
         idx === questionIndex ? {
           ...q,
-          options: q.options.map((opt, optIdx) => 
+          options: q.options.map((opt, optIdx) =>
             optIdx === optionIndex ? value : opt
           )
         } : q
@@ -123,20 +124,28 @@ const QuizzesTable = ({ quizzes = [], onQuizUpdate }) => {
     <div className="bg-white shadow rounded-lg overflow-hidden">
       <div className="p-4 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-gray-900">Quizzes</h2>
-        <button
-          onClick={() => {
-            setEditingQuiz(null);
-            setFormData({
-              title: '',
-              skillTag: '',
-              questions: [{ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 }]
-            });
-            setIsModalOpen(true);
-          }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-        >
-          Add Quiz
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setEditingQuiz(null);
+              setFormData({
+                title: '',
+                skillTag: '',
+                questions: [{ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 }]
+              });
+              setIsModalOpen(true);
+            }}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+          >
+            Add Quiz
+          </button>
+          <button
+            onClick={() => setShowGenerateModal(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+          >
+            Generate Quiz with AI
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -299,8 +308,78 @@ const QuizzesTable = ({ quizzes = [], onQuizUpdate }) => {
           </div>
         </div>
       )}
+      <GenerateQuizModal
+        open={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        onQuizCreated={onQuizUpdate}
+      />
     </div>
   );
 };
+
+
+function GenerateQuizModal({ open, onClose, onQuizCreated }) {
+  const [title, setTitle] = useState("");
+  const [skillTag, setSkillTag] = useState("");
+  const [numQuestions, setNumQuestions] = useState(5);
+  const [loading, setLoading] = useState(false);
+
+  const handleGenerate = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await axios.post("/api/quiz/generate-ai", {
+        title,
+        skillTag,
+        numQuestions,
+      });
+      onQuizCreated(res.data); // Refresh the quiz list
+      onClose();
+    } catch (err) {
+      alert("Failed to generate quiz");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 animate-fadeIn flex items-center justify-center">
+      <div className="relative top-20 mx-auto p-6 border w-[500px] shadow-2xl rounded-xl bg-white transform transition-all animate-slideIn">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-2xl font-semibold text-gray-900">Generate Quiz with AI</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-500 focus:outline-none"
+          >
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
+        <form onSubmit={handleGenerate} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Quiz Title</label>
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Quiz Title" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Skill Tag</label>
+            <input value={skillTag} onChange={e => setSkillTag(e.target.value)} placeholder="Skill Tag" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Number of Questions</label>
+            <input type="number" value={numQuestions} onChange={e => setNumQuestions(e.target.value)} min={1} max={20} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" />
+          </div>
+          <div className="flex justify-end space-x-3 pt-4">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" disabled={loading}>
+              Cancel
+            </button>
+            <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors" disabled={loading}>
+              {loading ? "Generating..." : "Generate"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default QuizzesTable; 

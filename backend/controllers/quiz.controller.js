@@ -1,6 +1,9 @@
 import Quiz from "../models/quiz.model.js";
 import QuizSubmission from "../models/quizSubmission.model.js";
 import User from "../models/user.model.js";
+import axios from "axios";
+import dotenv from 'dotenv';
+dotenv.config();
 
 export const createQuiz = async (req, res) => {
   try {
@@ -157,6 +160,51 @@ export const updateQuiz = async (req, res) => {
   } catch (error) {
     console.error("Error updating quiz:", error.message);
     res.status(500).json({ message: "Error updating quiz", error: error.message });
+  }
+};
+
+export const generateQuizWithAI = async (req, res) => {
+  const { skillTag, title, numQuestions } = req.body;
+  const prompt = `
+    Create a ${numQuestions || 5}-question multiple-choice quiz about ${skillTag}.
+    Each question should have 4 options and indicate the correct answer index.
+    Format as JSON: [{questionText, options:[], correctAnswerIndex}]
+  `;
+
+  try {
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1000,
+        temperature: 0.7,
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    // Parse the quiz from the AI's response
+    let content = response.data.choices[0].message.content.trim();
+    if (content.startsWith('```json')) {
+      content = content.replace(/```json|```/g, '').trim();
+    }
+    const questions = JSON.parse(content);
+
+    // Save to DB
+    const quiz = await Quiz.create({
+      title,
+      skillTag,
+      questions,
+    });
+
+    res.status(201).json(quiz);
+  } catch (error) {
+    console.error("OpenAI Quiz Generation Error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to generate quiz", details: error.message });
   }
 };
 
