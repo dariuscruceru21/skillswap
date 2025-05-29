@@ -32,12 +32,14 @@ const io = initializeSocket(httpServer);
 // CORS configuration
 const corsOptions = {
   origin: [
-    'https://skillswap-frontend.onrender.com',  // Production frontend URL
+    'https://skillswap-3ms1.onrender.com',  // New frontend URL
+    'https://skillswap-frontend.onrender.com',  // Old frontend URL
     'http://localhost:5173'  // Development frontend URL
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  exposedHeaders: ["Set-Cookie"]
 };
 
 // Apply CORS middleware
