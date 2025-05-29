@@ -52,7 +52,8 @@ class SocketService {
 
   sendMessage(data) {
     if (this.socket) {
-      this.socket.emit('send_message', data);
+      const roomId = [data.sender._id, data.receiver._id].sort().join('_');
+      this.socket.emit('send_message', { ...data, room: roomId });
     }
   }
 

@@ -33,7 +33,7 @@ const MessagesPage = () => {
       if (!user) return;
       
       try {
-        const response = await api.get("/api/conversations");
+        const response = await api.get("/api/messages/conversations");
         setConversations(response.data);
       } catch (error) {
         console.error("Error fetching conversations:", error);
@@ -53,7 +53,7 @@ const MessagesPage = () => {
 
     const fetchMessages = async () => {
       try {
-        const response = await api.get(`/api/messages/${selectedUser._id}`);
+        const response = await api.get(`/api/messages/messages/${selectedUser._id}`);
         setMessages(response.data);
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -68,6 +68,33 @@ const MessagesPage = () => {
         (data.sender._id === user._id && data.receiver._id === selectedUser._id)
       ) {
         setMessages(prev => [...prev, data]);
+        
+        // Update conversations list
+        const relatedConversationIndex = conversations.findIndex(
+          (conv) =>
+            (conv.user._id === data.sender._id && data.receiver._id === user._id) ||
+            (conv.user._id === data.receiver._id && data.sender._id === user._id)
+        );
+
+        if (relatedConversationIndex > -1) {
+          const existingConversation = conversations[relatedConversationIndex];
+          const updatedConversation = {
+            ...existingConversation,
+            lastMessage: data,
+            unreadCount: data.receiver._id === user._id && selectedUser?._id !== data.sender._id
+              ? existingConversation.unreadCount + 1
+              : existingConversation.unreadCount,
+          };
+
+          setConversations([
+            updatedConversation,
+            ...conversations.slice(0, relatedConversationIndex),
+            ...conversations.slice(relatedConversationIndex + 1),
+          ]);
+        } else {
+          // If it's a new conversation, refetch the conversations list
+          fetchConversations();
+        }
       }
     });
 
@@ -75,58 +102,7 @@ const MessagesPage = () => {
       socketService.leaveRoom(roomId);
       unsubscribeMessages();
     };
-  }, [selectedUser, user]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const unsubscribeConversations = socketService.onMessage(async (newMessage) => {
-      console.log("New message received for conversations list:", newMessage);
-      const relatedConversationIndex = conversations.findIndex(
-        (conv) =>
-          (conv.user._id === newMessage.sender._id && newMessage.receiver._id === user._id) ||
-          (conv.user._id === newMessage.receiver._id && newMessage.sender._id === user._id)
-      );
-
-      console.log("Related conversation index:", relatedConversationIndex);
-
-      let updatedConversations;
-
-      if (relatedConversationIndex > -1) {
-        const existingConversation = conversations[relatedConversationIndex];
-        const updatedConversation = {
-          ...existingConversation,
-          lastMessage: newMessage,
-          unreadCount: newMessage.receiver._id === user._id && selectedUser?._id !== newMessage.sender._id
-            ? existingConversation.unreadCount + 1
-            : existingConversation.unreadCount,
-        };
-
-        updatedConversations = [
-          updatedConversation,
-          ...conversations.slice(0, relatedConversationIndex),
-          ...conversations.slice(relatedConversationIndex + 1),
-        ];
-
-      } else {
-        console.log("New conversation, refetching list...");
-        try {
-          const response = await api.get("/api/conversations");
-          updatedConversations = response.data;
-        } catch (error) {
-          console.error("Error refetching conversations after new message:", error);
-          return;
-        }
-      }
-      
-      console.log("Setting updated conversations:", updatedConversations);
-      setConversations(updatedConversations);
-    });
-
-    return () => {
-      unsubscribeConversations();
-    };
-  }, [user, conversations, selectedUser]);
+  }, [selectedUser, user, conversations]);
 
   const handleSendMessage = async (content) => {
     if (!user || !selectedUser || !content.trim()) return;
@@ -134,12 +110,10 @@ const MessagesPage = () => {
     const messageData = {
       content,
       receiver: selectedUser._id,
-      sender: user._id,
-      timestamp: new Date().toISOString()
     };
 
     try {
-      const response = await api.post("/api/messages", messageData);
+      const response = await api.post("/api/messages/send", messageData);
       socketService.sendMessage(response.data);
     } catch (error) {
       console.error("Error sending message:", error);

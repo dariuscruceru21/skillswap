@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { createServer } from 'http';
 import authRoutes from './routes/auth.route.js';
 import listingsRoutes from './routes/listings.route.js';
 import cartRoutes from './routes/cart.route.js';
@@ -10,11 +11,17 @@ import swapRoutes from './routes/swap.routes.js';
 import donationRoutes from './routes/donation.route.js';
 import analyticsRoutes from './routes/analytics.route.js';
 import skillRoutes from './routes/skill.routes.js';
+import messageRoutes from './routes/message.routes.js';
 import { connectDB } from './lib/db.js';
+import { initializeSocket } from './lib/socket.js';
 
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
+
+// Initialize Socket.IO
+const io = initializeSocket(httpServer);
 
 // CORS configuration
 const corsOptions = {
@@ -30,6 +37,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
+// Make io accessible to routes
+app.set('io', io);
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/listings", listingsRoutes);
@@ -39,6 +49,7 @@ app.use("/api/swap", swapRoutes);
 app.use("/api/donation", donationRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/skills", skillRoutes);
+app.use("/api/messages", messageRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running");
@@ -50,7 +61,7 @@ const startServer = async () => {
     await connectDB();
     console.log('MongoDB connected');
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
   } catch (err) {

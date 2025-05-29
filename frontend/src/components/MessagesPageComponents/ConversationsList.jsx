@@ -32,7 +32,7 @@ export default function ConversationsList({ conversations, setConversations, sel
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get("/api/users");
+      const response = await api.get("/api/auth/users");
       setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -42,13 +42,13 @@ export default function ConversationsList({ conversations, setConversations, sel
   const handleStartConversation = async (user) => {
     try {
       // Send an initial message to start the conversation
-      await api.post("/api/messages", {
+      await api.post("/api/messages/send", {
         content: "Hello! 👋",
         receiver: user._id,
       });
       
       // Refresh conversations list
-      const response = await api.get("/api/conversations");
+      const response = await api.get("/api/messages/conversations");
       setConversations(response.data);
       
       // Select the new conversation
