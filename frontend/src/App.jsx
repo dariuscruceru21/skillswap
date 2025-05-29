@@ -9,6 +9,7 @@ import MySkillsPage from "./pages/MySkillsPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import QuizPage from "./pages/QuizPage"; // We will create this next
 import ExplorePage from "./pages/ExplorePage";
+import MessagesPage from "./pages/MessagesPage";
 
 
 function App() {
@@ -46,7 +47,7 @@ function App() {
         <Route path="/skill" element={<MySkillsPage />} />
         <Route path="/admin/*" element={<AdminDashboard />} />
         <Route path="/quiz/:quizId" element={<QuizPage />} />
-        
+        <Route path="/messages" element={<MessagesPage/>}/>
       </Routes>
     </div>
   );
