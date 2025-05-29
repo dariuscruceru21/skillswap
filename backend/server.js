@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import authRoutes from './routes/auth.route.js';
 import listingsRoutes from './routes/listings.route.js';
 import cartRoutes from './routes/cart.route.js';
@@ -15,7 +17,11 @@ import messageRoutes from './routes/message.routes.js';
 import { connectDB } from './lib/db.js';
 import { initializeSocket } from './lib/socket.js';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables from backend/.env
+dotenv.config({ path: join(__dirname, '.env') });
 
 const app = express();
 const httpServer = createServer(app);
